@@ -93,43 +93,59 @@ def stats(St,Sq,Vt,Vq,IDstr):
                 olt,idV,ids=np.intersect1d(Vt_,St_,return_indices=True)
                 Vt_t=Vt_[idV]
                 Vq_t=Vq_[idV]
-                #plot and save
-                strDates = []               
-                for day in Vt_t:
-                    date= datetime.date.fromordinal(day)
-                    strDates.append(date)
-                fig = plt.figure()                
-                ax = fig.add_subplot()
-                dates = Pdate.date2num(strDates)
-                ax.plot_date(dates, Vq_t, fmt='-')
-                ax.plot_date(dates, Sq_, fmt='-')               
-               
-                ax.set_ylabel('Q (m^3/s)')
-                ax.legend(['Gage',alg])
-                fig.autofmt_xdate()
-                figname=figdir+'/'+IDstr+alg+'.jpg'
-                fig.savefig(figname)
-                
-    
-                # NSE
-                top=np.sum((Sq_-Vq_t)**2)
-                bottom=np.sum(Vq_-np.mean(Vq_t))**2
-                NSE=1-(top/bottom)
-                NSEo.append(NSE)
-                 #Rsq
-                r=np.corrcoef( Sq_,Vq_t)
-                r=r[0,1]
-                Rsq=r**2
-                Rsqo.append(Rsq)
-                #KGE
-                KGE=1-np.sqrt((r-1)**2 + ((np.std( Sq_)/np.std(Vq_t))-1)**2 +((np.mean(Sq_)/np.mean(Vq_t))-1)**2)  
-                KGEo.append(KGE)
-                 #n
-                n=len(Vq_t)
-                no.append(n)
-                #RMSE
-                RMSE=np.sqrt((np.sum( Sq_ - Vq_t)**2)/n)
-                RMSEo.append(RMSE)
+                #pull  a min max for all plots here
+                strDates = []
+                MM=[np.min(St[St>0]),np.max(St[St>0])]
+                for day in MM:
+                        date= datetime.date.fromordinal(day)
+                        strDates.append(date)                          
+                    
+                datesMM = Pdate.date2num(strDates)
+                if any(Sq_>EMPTY) and any(Vq_t>EMPTY):                    
+                    strDates = []               
+                    for day in Vt_t:
+                        date= datetime.date.fromordinal(day)
+                        strDates.append(date)
+                    fig = plt.figure()                
+                    ax = fig.add_subplot()
+                    dates = Pdate.date2num(strDates)
+                    ax.plot_date(dates, Vq_t, fmt='-')
+                    ax.plot_date(dates, Sq_, fmt='-')               
+                   
+                    ax.set_ylabel('Q (m^3/s)')
+                    ax.legend(['Gage',alg])
+                    plt.xlim([np.min(datesMM), np.max(datesMM)])
+                    fig.autofmt_xdate()
+                    figname=figdir+'/'+IDstr+alg+'.jpg'
+                    fig.savefig(figname)
+                    
+                    
+        
+                    # NSE
+                    top=np.sum((Vq_t-Sq_)**2)
+                    bottom=np.sum((Vq_t-np.mean(Vq_t))**2)
+                    NSE=1-(top/bottom)
+                    NSEo.append(NSE)
+                     #Rsq
+                    r=np.corrcoef( Sq_,Vq_t)
+                    r=r[0,1]
+                    Rsq=r**2
+                    Rsqo.append(Rsq)
+                    #KGE
+                    KGE=1-np.sqrt((r-1)**2 + ((np.std( Sq_)/np.std(Vq_t))-1)**2 +((np.mean(Sq_)/np.mean(Vq_t))-1)**2)  
+                    KGEo.append(KGE)
+                     #n
+                    n=len(Vq_t)
+                    no.append(n)
+                    #RMSE
+                    RMSE=np.sqrt(np.mean( (Sq_ - Vq_t)**2))
+                    RMSEo.append(RMSE)
+                else:
+                        NSEo.append(EMPTY)
+                        Rsqo.append(EMPTY)
+                        KGEo.append(EMPTY)
+                        no.append(EMPTY)
+                        RMSEo.append(EMPTY)
             else:
                     NSEo.append(EMPTY)
                     Rsqo.append(EMPTY)
