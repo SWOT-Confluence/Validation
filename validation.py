@@ -106,8 +106,10 @@ def stats(St,Sq,Vt,Vq,IDstr):
                
                 ax.set_ylabel('Q (m^3/s)')
                 ax.legend(['Gage',alg])
+                fig.autofmt_xdate()
                 figname=figdir+'/'+IDstr+alg+'.jpg'
                 fig.savefig(figname)
+                
     
                 # NSE
                 top=np.sum((Sq_-Vq_t)**2)
