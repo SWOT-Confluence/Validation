@@ -12,6 +12,10 @@ def stats(St,Sq,Vt,Vq):
     #pull actual Q and t from uniform mostly empty block
     Vt_=Vt[np.logical_not(np.isnan(Vq))] 
     Vq_=Vq[np.logical_not(np.isnan(Vq))]
+    #aditionally remove any -9999
+    Vt_=Vt_[Vq_>0]
+    Vq_=Vq_[Vq_>0]
+   
     olt,idV,ids=np.intersect1d(Vt_,St,return_indices=True)
     #t does not change between groups?
     Vt_=Vt_[idV]
@@ -22,47 +26,91 @@ def stats(St,Sq,Vt,Vq):
     KGEo=[]
     RMSEo=[]
     no=[]
-    for Grp in Sq:    
-        Sq_=Sq[Grp]       
-        Sq_=Sq_[ids]
-        ## strictly for testing I am converting -999999999999 to an array of posative value
-        #Sq_=np.random.uniform(low=0.0, high=300.0,size=len(Sq_))
-            
-        if any(Sq_>EMPTY) and any(Vq_>EMPTY):     
-           
-            # NSE
-            top=np.sum((Sq_-Vq_)**2)
-            bottom=np.sum(Vq_-np.mean(Vq_))**2
-            NSE=1-(top/bottom)
-            NSEo.append(NSE)
-             #Rsq
-            r=np.corrcoef( Sq_,Vq_)
-            r=r[0,1]
-            Rsq=r**2
-            Rsqo.append(Rsq)
-            #KGE
-            KGE=1-np.sqrt((r-1)**2 + ((np.std( Sq_)/np.std(Vq_))-1)**2 +((np.mean(Sq_)/np.mean(Vq_))-1)**2)  
-            KGEo.append(KGE)
-             #n
-            n=len(Vq_)
-            no.append(n)
-            #RMSE
-            RMSE=np.sqrt((np.sum( Sq_ - Vq_)**2)/n)
-            RMSEo.append(RMSE)
-        else:
-                NSEo.append(EMPTY)
-                Rsqo.append(EMPTY)
-                KGEo.append(EMPTY)
-                no.append(EMPTY)
-                RMSEo.append(EMPTY)
-    validout={
-        "algorithm": ['geobam','hivdi','metroman','momma'],
-        "NSE":NSEo[:],
-        "Rsq":Rsqo[:],
-        "KGE":KGEo[:],
-        "RMSE":RMSEo[:],
-        "n":no[:]      
-        }
+    if len(Sq)<10:
+        for Grp in Sq:    
+            Sq_=Sq[Grp]       
+            Sq_=Sq_[ids]
+            ## strictly for testing I am converting -999999999999 to an array of posative value
+            #Sq_=np.random.uniform(low=0.0, high=300.0,size=len(Sq_))
+                
+            if any(Sq_>EMPTY) and any(Vq_>EMPTY):     
+               
+                # NSE
+                top=np.sum((Sq_-Vq_)**2)
+                bottom=np.sum(Vq_-np.mean(Vq_))**2
+                NSE=1-(top/bottom)
+                NSEo.append(NSE)
+                 #Rsq
+                r=np.corrcoef( Sq_,Vq_)
+                r=r[0,1]
+                Rsq=r**2
+                Rsqo.append(Rsq)
+                #KGE
+                KGE=1-np.sqrt((r-1)**2 + ((np.std( Sq_)/np.std(Vq_))-1)**2 +((np.mean(Sq_)/np.mean(Vq_))-1)**2)  
+                KGEo.append(KGE)
+                 #n
+                n=len(Vq_)
+                no.append(n)
+                #RMSE
+                RMSE=np.sqrt((np.sum( Sq_ - Vq_)**2)/n)
+                RMSEo.append(RMSE)
+            else:
+                    NSEo.append(EMPTY)
+                    Rsqo.append(EMPTY)
+                    KGEo.append(EMPTY)
+                    no.append(EMPTY)
+                    RMSEo.append(EMPTY)
+        validout={
+            "algorithm": ['geobam','hivdi','metroman','momma'],
+            "NSE":NSEo[:],
+            "Rsq":Rsqo[:],
+            "KGE":KGEo[:],
+            "RMSE":RMSEo[:],
+            "n":no[:]      
+            }
+    else:
+        for Grp in Sq:    
+            Sq_=Sq[Grp]       
+            Sq_=Sq_[ids]
+            ## strictly for testing I am converting -999999999999 to an array of posative value
+            #Sq_=np.random.uniform(low=0.0, high=300.0,size=len(Sq_))
+                
+            if any(Sq_>EMPTY) and any(Vq_>EMPTY):     
+               
+                # NSE
+                top=np.sum((Sq_-Vq_)**2)
+                bottom=np.sum(Vq_-np.mean(Vq_))**2
+                NSE=1-(top/bottom)
+                NSEo.append(NSE)
+                 #Rsq
+                r=np.corrcoef( Sq_,Vq_)
+                r=r[0,1]
+                Rsq=r**2
+                Rsqo.append(Rsq)
+                #KGE
+                KGE=1-np.sqrt((r-1)**2 + ((np.std( Sq_)/np.std(Vq_))-1)**2 +((np.mean(Sq_)/np.mean(Vq_))-1)**2)  
+                KGEo.append(KGE)
+                 #n
+                n=len(Vq_)
+                no.append(n)
+                #RMSE
+                RMSE=np.sqrt((np.sum( Sq_ - Vq_)**2)/n)
+                RMSEo.append(RMSE)
+            else:
+                    NSEo.append(EMPTY)
+                    Rsqo.append(EMPTY)
+                    KGEo.append(EMPTY)
+                    no.append(EMPTY)
+                    RMSEo.append(EMPTY)
+        validout={
+            "algorithm": ['geobam_q_c','hivdi_q_c','metroman_q_c','momma_q_c','sad_q_c',
+                          'geobam_q_uc','hivdi_q_uc','metroman_q_uc','momma_q_uc','sad_q_uc'],
+            "NSE":NSEo[:],
+            "Rsq":Rsqo[:],
+            "KGE":KGEo[:],
+            "RMSE":RMSEo[:],
+            "n":no[:]      
+            }
    
     return  validout
     
