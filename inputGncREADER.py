@@ -14,7 +14,7 @@ def read(IDXnc):
         # need to pull Q, T, and reach identifiers
         #reach
         USGS_reach=np.ma.getdata(ncf.variables['reach_ID'][:])
-        USGS_reach=["%.f" % number for number in USGS_reach]
+        #USGS_reach=["%.f" % number for number in USGS_reach]
         #Q
         USGSq = np.ma.getdata(ncf.variables['USGS_Q'][:])    
         #Qt
@@ -38,30 +38,62 @@ def SWOTread(IDXnc):
     from os.path import isfile, join
     from datetime import datetime
      # time data stored in SWOT h/w files
-    SWOThwdir="C:/Users/coss.31/OneDrive - The Ohio State University/Documents/PYfun/valid/SWOTdirect/input/swot"
-    onlyfiles = [f for f in listdir( SWOThwdir) if isfile(join( SWOThwdir, f))]
-    IDstr=IDXnc[-25:-14]
-    Tfile = [match for match in onlyfiles if IDstr in match]    
-    ncf = Dataset(SWOThwdir+'/'+Tfile[0])
-    T=np.ma.getdata(ncf.variables['nt'][:])
-    SWt=[]
-    for time in T:        
-        d=datetime.strptime(str(time), "%Y%m%d")
-        SWt.append(d.toordinal()+1)
-    #pull q next    
-    ncf = Dataset(IDXnc)
-    #parse groups
-    geobam=ncf.groups['geobam']
-    hivdi=ncf.groups['hivdi']
-    metroman=ncf.groups['metroman']
-    momma=ncf.groups['momma']
-    #put Qs into single SWq dict
-    SWq={
-        "geobam":np.ma.getdata(geobam.variables['q'][:]),
-        "hivdi":np.ma.getdata(hivdi.variables['q'][:]),
-        "metroman":np.ma.getdata(metroman.variables['q'][:]),
-        "momma":np.ma.getdata(momma.variables['q'][:])
-        }
+    if 'offline' in IDXnc:
+         SWOThwdir="C:/Users/coss.31/OneDrive - The Ohio State University/Documents/PYfun/valid/SWOTdirect/input/swot"
+         onlyfiles = [f for f in listdir( SWOThwdir) if isfile(join( SWOThwdir, f))]
+         IDstr=IDXnc[-22:-11]#this will nedd changed again for moi
+         Tfile = [match for match in onlyfiles if IDstr in match]    
+         ncf = Dataset(SWOThwdir+'/'+Tfile[0])
+         T=np.ma.getdata(ncf.variables['nt'][:])
+         SWt=[]
+         for time in T:        
+            d=datetime.strptime(str(time), "%Y%m%d")
+            SWt.append(d.toordinal()+1)
+        #pull q next    
+         ncf = Dataset(IDXnc)
+        #Offline files do not use groups!
+        
+        #put Qs into single SWq dict
+         SWq={
+            "geobam_q_c":np.ma.getdata(ncf.variables['bam_q_c'][:]),
+            "hivdi_q_c":np.ma.getdata(ncf.variables['hivdi_q_c'][:]),
+            "metroman_q_c":np.ma.getdata(ncf.variables['metro_q_c'][:]),
+            "momma_q_c":np.ma.getdata(ncf.variables['momma_q_c'][:]),
+            "sad_q_c":np.ma.getdata(ncf.variables['sads_q_c'][:]),
+            #
+            "geobam_q_uc":np.ma.getdata(ncf.variables['bam_q_uc'][:]),
+            "hivdi_q_uc":np.ma.getdata(ncf.variables['hivdi_q_uc'][:]),
+            "metroman_q_uc":np.ma.getdata(ncf.variables['metro_q_uc'][:]),
+            "momma_q_uc":np.ma.getdata(ncf.variables['momma_q_uc'][:]),
+            "sad_q_uc":np.ma.getdata(ncf.variables['sads_q_uc'][:])
+            }
+    else:
+             
+        SWOThwdir="C:/Users/coss.31/OneDrive - The Ohio State University/Documents/PYfun/valid/SWOTdirect/input/swot"
+        onlyfiles = [f for f in listdir( SWOThwdir) if isfile(join( SWOThwdir, f))]
+        
+        IDstr=IDXnc[-22:-11]#this will nedd changed again for moi
+        Tfile = [match for match in onlyfiles if IDstr in match]    
+        ncf = Dataset(SWOThwdir+'/'+Tfile[0])
+        T=np.ma.getdata(ncf.variables['nt'][:])
+        SWt=[]
+        for time in T:        
+            d=datetime.strptime(str(time), "%Y%m%d")
+            SWt.append(d.toordinal()+1)
+        #pull q next    
+        ncf = Dataset(IDXnc)
+        #parse groups
+        geobam=ncf.groups['geobam']
+        hivdi=ncf.groups['hivdi']
+        metroman=ncf.groups['metroman']
+        momma=ncf.groups['momma']
+        #put Qs into single SWq dict
+        SWq={
+            "geobam":np.ma.getdata(geobam.variables['q'][:]),
+            "hivdi":np.ma.getdata(hivdi.variables['q'][:]),
+            "metroman":np.ma.getdata(metroman.variables['q'][:]),
+            "momma":np.ma.getdata(momma.variables['q'][:])
+            }
     return SWt,SWq
      
     
