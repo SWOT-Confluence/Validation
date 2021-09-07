@@ -50,7 +50,7 @@ for file in onlyfiles:
             Vt = Vt.astype(int)+366 # Vt in matlab tatetime +366 converts to Python ordinal
             Vq=GRDCq[:,Target]   
              
-        Vout= valid.stats(SWt,SWq,Vt,Vq)
+        Vout= valid.stats(SWt,SWq,Vt,Vq,IDstr)
         ncO.write(Vout,IDstr,SWt)
     else:
         ncO.write(EMPTY,IDstr,EMPTY)
