@@ -80,13 +80,15 @@ def stats(St,Sq,Vt,Vq,IDstr):
             "n":no[:]      
             }
     else:
+        
         for Grp in Sq:    
             Sq_=Sq[Grp]       
             Sq_=Sq_[ids]           
-                
+            St__= St[ids]
+            alg=Grp
             if any(Sq_>EMPTY) and any(Vq_>EMPTY):
                  #SWOT empty removal
-                St_=St[Sq_>0]
+                St_=St__[Sq_>0]
                 Sq_=Sq_[Sq_>0]
                 olt,idV,ids=np.intersect1d(Vt_,St_,return_indices=True)
                 Vt_t=Vt_[idV]
@@ -103,7 +105,8 @@ def stats(St,Sq,Vt,Vq,IDstr):
                 ax.plot_date(dates, Sq_, fmt='-')               
                
                 ax.set_ylabel('Q (m^3/s)')
-                figname=figdir+'/'+IDstr+'.jpg'
+                ax.legend(['Gage',alg])
+                figname=figdir+'/'+IDstr+alg+'.jpg'
                 fig.savefig(figname)
     
                 # NSE
