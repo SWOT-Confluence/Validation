@@ -43,6 +43,7 @@ import numpy as np
 INPUT_DIR = Path("/home/nikki/Documents/confluence/workspace/validation/data/input/input")
 OFFLINE_DIR = Path("/home/nikki/Documents/confluence/workspace/validation/data/input/offline")
 OUTPUT = Path("/home/nikki/Documents/confluence/workspace/validation/data/output")
+FIG_DIR = Path("/home/nikki/Documents/confluence/workspace/validation/data/figs")
 
 class ValidationConfluence:
     """Class that runs validation operations for Confluence workflow.
@@ -51,6 +52,8 @@ class ValidationConfluence:
     ----------
     cont: dict
         continent name key with associated numeric identifier values (list)
+    fig_dir: Path
+        path to figure directory (storage of hydrographs)
     gage_data: dict
         dictionary of gage reach identifiers, q, and qt
     offline_ids: numpy.ndarray
@@ -78,7 +81,7 @@ class ValidationConfluence:
         run validation operations on gage data and FLPE data; write stats
     """
 
-    def __init__(self, cont_json, offline_dir, sos_file, output_dir):
+    def __init__(self, cont_json, offline_dir, sos_file, output_dir, fig_dir):
         """
         Parameters
         ----------
@@ -90,8 +93,11 @@ class ValidationConfluence:
             path to SoS file for continent
         output_dir: Path
             path to output directory
+        fig_dir: Path
+            path to figure directory (storage of hydrographs)
         """
         self.cont = cont_json
+        self.fig_dir = fig_dir
         self.gage_data = {}
         self.offline_ids = self.__get_offline_ids(offline_dir)
         self.offline_data = {}
@@ -136,7 +142,7 @@ class ValidationConfluence:
             self.gage_data["type"] = "usgs"
             self.gage_data["reach_id"] = usgs["usgs_reach_id"][:].filled(np.nan)
             self.gage_data["q"] = usgs["usgs_q"][:].filled(np.nan)
-            self.gage_data["qt"] = usgs["usgs_qt"][:].filled(np.nan)
+            self.gage_data["qt"] = usgs["usgs_qt"][:].filled(np.nan).astype(int)
         elif "grdc" in groups:
             grdc = sos["model"]["grdc"]
             self.gage_data["type"] = "grdc"
@@ -203,7 +209,8 @@ class ValidationConfluence:
                     time = self.read_offline_data(reach)
                     
                     # Stats
-                    data = stats(time, self.offline_data, qt, q)        
+                    data = stats(time, self.offline_data, qt, q, str(reach),
+                        self.fig_dir)  
             self.write(data, time, reach, self.gage_data["type"])
 
     def write(self, stats, time, reach_id, gage_type):
@@ -296,7 +303,7 @@ def run_validation():
     cont_data = get_cont_data(INPUT_DIR / cont_json, index)
 
     sos_file = INPUT_DIR / "sos" / f"{list(cont_data.keys())[0]}_apriori_rivers_v07_SOS.nc"
-    vc = ValidationConfluence(cont_data, OFFLINE_DIR, sos_file, OUTPUT)
+    vc = ValidationConfluence(cont_data, OFFLINE_DIR, sos_file, OUTPUT, FIG_DIR)
     vc.read_gage_data()
     
     ## TODO sac reach ids
