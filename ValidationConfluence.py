@@ -265,8 +265,8 @@ class ValidationConfluence:
         out.has_validation = 0 if np.where(stats["algorithm"] == "")[0].size == self.NUM_ALGOS else 1
         out.gage_type = gage_type.upper()
 
-        a_dim = out.createDimension("num_algos", stats["algorithm"].size)
-        c_dim = out.createDimension("nchar", 16)
+        a_dim = out.createDimension("num_algos", None)
+        c_dim = out.createDimension("nchar", None)
         t_dim = out.createDimension("time", len(time))
         t_v = out.createVariable("time", "f4", ("time",))
         t_v.units = "days since Jan 1 Year 1"
