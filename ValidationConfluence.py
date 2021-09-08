@@ -32,18 +32,18 @@ from os import scandir
 from pathlib import Path
 import sys
 
-# Local imports
-from validation import stats
-
 # Third-party imports
 from netCDF4 import Dataset, stringtochar
 import numpy as np
 
+# Local imports
+from val.validation import stats
+
 # Constants
-INPUT = Path("/home/nikki/Documents/confluence/workspace/validation/data/input/input")
-OFFLINE_DIR = Path("/home/nikki/Documents/confluence/workspace/validation/data/input/offline")
-OUTPUT = Path("/home/nikki/Documents/confluence/workspace/validation/data/output")
-FIG_DIR = Path("/home/nikki/Documents/confluence/workspace/validation/data/figs")
+INPUT = Path("/mnt/data/input")
+OFFLINE_DIR = Path("/mnt/data/offline")
+OUTPUT = Path("/mnt/data/output/stats")
+FIG_DIR = Path("/mnt/data/output/figs")
 
 class ValidationConfluence:
     """Class that runs validation operations for Confluence workflow.
