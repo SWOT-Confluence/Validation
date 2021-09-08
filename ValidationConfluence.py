@@ -40,7 +40,7 @@ from netCDF4 import Dataset, stringtochar
 import numpy as np
 
 # Constants
-INPUT_DIR = Path("/home/nikki/Documents/confluence/workspace/validation/data/input/input")
+INPUT = Path("/home/nikki/Documents/confluence/workspace/validation/data/input/input")
 OFFLINE_DIR = Path("/home/nikki/Documents/confluence/workspace/validation/data/input/offline")
 OUTPUT = Path("/home/nikki/Documents/confluence/workspace/validation/data/output")
 FIG_DIR = Path("/home/nikki/Documents/confluence/workspace/validation/data/figs")
@@ -56,6 +56,10 @@ class ValidationConfluence:
         path to figure directory (storage of hydrographs)
     gage_data: dict
         dictionary of gage reach identifiers, q, and qt
+    input_dir: Path
+        path to input directory
+    NUM_ALGOS: int
+        number of algorithms to store data for
     offline_ids: numpy.ndarray
         list of reach identifiers with offline data
     offline_data: dict
@@ -81,7 +85,11 @@ class ValidationConfluence:
         run validation operations on gage data and FLPE data; write stats
     """
 
-    def __init__(self, cont_json, offline_dir, sos_file, output_dir, fig_dir):
+    NUM_ALGOS = 10
+
+    def __init__(self, cont_json, offline_dir, sos_file, input_dir, output_dir,
+        fig_dir):
+
         """
         Parameters
         ----------
@@ -91,6 +99,8 @@ class ValidationConfluence:
             path to offline data directory
         sos_file: Path
             path to SoS file for continent
+        input_dir: Path
+            path to input directory
         output_dir: Path
             path to output directory
         fig_dir: Path
@@ -99,6 +109,7 @@ class ValidationConfluence:
         self.cont = cont_json
         self.fig_dir = fig_dir
         self.gage_data = {}
+        self.input_dir = input_dir
         self.offline_ids = self.__get_offline_ids(offline_dir)
         self.offline_data = {}
         self.offline_dir = offline_dir
@@ -163,7 +174,6 @@ class ValidationConfluence:
 
         offline_file = f"{self.offline_dir}/{reach_id}_offline.nc"
         off = Dataset(offline_file, 'r')
-        time = off["nt"][:].filled(np.nan)
         self.offline_data["geobam_q_c"] = off["bam_q_c"][:]
         self.offline_data["hivdi_q_c"] = off["hivdi_q_c"][:]
         self.offline_data["metroman_q_c"] = off["metro_q_c"][:]
@@ -176,7 +186,24 @@ class ValidationConfluence:
         self.offline_data["sad_q_uc"] = off["sads_q_uc"][:]
         off.close()
 
+    def read_time_data(self, reach_id):
+        """Read time of observations from SWOT files.
+
+        Parameters
+        ----------
+        reach_id: int
+            unique reach identifier
+        
+        Returns
+        -------
+        list of ordinal times
+        """
+
+        swot = Dataset(self.input_dir / "swot" / f"{reach_id}_SWOT.nc", 'r')
+        time = swot["nt"][:].filled(np.nan)
+        swot.close()
         return [ datetime.strptime(str(t), "%Y%m%d").toordinal() + 1 for t in time ]
+
 
     def validate(self, sac_rids):
         """Run validation operations on gage data and FLPE data; write stats.
@@ -188,14 +215,14 @@ class ValidationConfluence:
         # for reach in self.reach_ids:    ## TODO
         for reach in sac_rids:
             data = {
-                "algorithm": np.array([""]),
-                "NSE": np.array([-9999]),
-                "Rsq": np.array([-9999]),
-                "KGE": np.array([-9999]),
-                "RMSE": np.array([-9999]),
-                "n": np.array([-9999])
+                "algorithm": np.full((self.NUM_ALGOS), fill_value=""),
+                "NSE": np.full((self.NUM_ALGOS), fill_value=-9999),
+                "Rsq": np.full((self.NUM_ALGOS), fill_value=-9999),
+                "KGE": np.full((self.NUM_ALGOS), fill_value=-9999),
+                "RMSE": np.full((self.NUM_ALGOS), fill_value=-9999),
+                "n": np.full((self.NUM_ALGOS), fill_value=-9999)
             }
-            time = []
+            time = self.read_time_data(reach)
             # Check if gage data is present
             if reach in self.gage_data["reach_id"]:
                 # Determine if offline data for gage data
@@ -206,11 +233,11 @@ class ValidationConfluence:
                     q = self.gage_data["q"][index,:].flatten()
 
                     # Offline data
-                    time = self.read_offline_data(reach)
+                    self.read_offline_data(reach)
                     
                     # Stats
                     data = stats(time, self.offline_data, qt, q, str(reach),
-                        self.fig_dir)  
+                        self.fig_dir)
             self.write(data, time, reach, self.gage_data["type"])
 
     def write(self, stats, time, reach_id, gage_type):
@@ -233,10 +260,9 @@ class ValidationConfluence:
 
         out = Dataset(self.output_dir / f"{reach_id}_validation.nc", 'w')
         out.reach_id = reach_id
-        out.description = f"'Statistics for reach: {reach_id}"
+        out.description = f"Statistics for reach: {reach_id}"
         out.history = datetime.now().strftime('%d-%b-%Y %H:%M:%S')
-        # out.has_validation = 0 if stats["algorithm"].dtype == "float64" and np.isnan(stats["algorithm"]) else 1
-        out.has_validation = 0 if stats["algorithm"].dtype == "int64" and np.isclose(stats["algorithm"], empty) else 1
+        out.has_validation = 0 if np.where(stats["algorithm"] == "")[0].size == self.NUM_ALGOS else 1
         out.gage_type = gage_type.upper()
 
         a_dim = out.createDimension("num_algos", stats["algorithm"].size)
@@ -300,14 +326,14 @@ def run_validation():
         cont_json = sys.argv[1]
     except IndexError:
         cont_json = "continent.json"
-    cont_data = get_cont_data(INPUT_DIR / cont_json, index)
+    cont_data = get_cont_data(INPUT / cont_json, index)
 
-    sos_file = INPUT_DIR / "sos" / f"{list(cont_data.keys())[0]}_apriori_rivers_v07_SOS.nc"
-    vc = ValidationConfluence(cont_data, OFFLINE_DIR, sos_file, OUTPUT, FIG_DIR)
+    sos_file = INPUT / "sos" / f"{list(cont_data.keys())[0]}_apriori_rivers_v07_SOS.nc"
+    vc = ValidationConfluence(cont_data, OFFLINE_DIR, sos_file, INPUT, OUTPUT, FIG_DIR)
     vc.read_gage_data()
     
     ## TODO sac reach ids
-    with open(INPUT_DIR / "reaches.json") as json_file:
+    with open(INPUT / "reaches.json") as json_file:
         data = json.load(json_file)
     sac_rids = [ e["reach_id"] for e in data ]
     
