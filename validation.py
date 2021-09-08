@@ -61,7 +61,7 @@ def stats(St,Sq,Vt,Vq):
                     no.append(EMPTY)
                     RMSEo.append(EMPTY)
         validout={
-            "algorithm": ['geobam','hivdi','metroman','momma'],
+            "algorithm": np.array(['geobam','hivdi','metroman','momma']),
             "NSE":NSEo[:],
             "Rsq":Rsqo[:],
             "KGE":KGEo[:],
@@ -103,8 +103,8 @@ def stats(St,Sq,Vt,Vq):
                     no.append(EMPTY)
                     RMSEo.append(EMPTY)
         validout={
-            "algorithm": ['geobam_q_c','hivdi_q_c','metroman_q_c','momma_q_c','sad_q_c',
-                          'geobam_q_uc','hivdi_q_uc','metroman_q_uc','momma_q_uc','sad_q_uc'],
+            "algorithm": np.array(['geobam_q_c','hivdi_q_c','metroman_q_c','momma_q_c','sad_q_c',
+                          'geobam_q_uc','hivdi_q_uc','metroman_q_uc','momma_q_uc','sad_q_uc']),
             "NSE":NSEo[:],
             "Rsq":Rsqo[:],
             "KGE":KGEo[:],
