@@ -19,6 +19,8 @@ OUTPUT_DIR: Path
 
 Functions
 ---------
+copy_sos_data(confluence_fs, run_type)
+    copy S3 SoS data to output directory
 get_cont_data(cont_json, index)
     extract and return the continent data needs to be extracted for
 run_validation()
@@ -32,18 +34,20 @@ from os import scandir
 from pathlib import Path
 import sys
 
+# Local imports
+from val.val_conf import confluence_creds
+from val.validation import stats
+
 # Third-party imports
 from netCDF4 import Dataset, stringtochar
 import numpy as np
-
-# Local imports
-from val.validation import stats
+import s3fs
 
 # Constants
 INPUT = Path("/mnt/data/input")
+SOS_DIR = Path("/mnt/data/output/sos")
 OFFLINE_DIR = Path("/mnt/data/offline")
-OUTPUT = Path("/mnt/data/output/stats")
-FIG_DIR = Path("/mnt/data/output/figs")
+OUTPUT = Path("/mnt/data/output")
 
 class ValidationConfluence:
     """Class that runs validation operations for Confluence workflow.
@@ -87,8 +91,7 @@ class ValidationConfluence:
 
     NUM_ALGOS = 10
 
-    def __init__(self, cont_json, offline_dir, sos_file, input_dir, output_dir,
-        fig_dir):
+    def __init__(self, cont_json, offline_dir, sos_file, input_dir, output_dir):
 
         """
         Parameters
@@ -103,18 +106,15 @@ class ValidationConfluence:
             path to input directory
         output_dir: Path
             path to output directory
-        fig_dir: Path
-            path to figure directory (storage of hydrographs)
         """
         self.cont = cont_json
-        self.fig_dir = fig_dir
         self.gage_data = {}
         self.input_dir = input_dir
         self.offline_ids = self.__get_offline_ids(offline_dir)
         self.offline_data = {}
         self.offline_dir = offline_dir
         self.output_dir = output_dir
-        self.reach_ids = self.get_reach_ids(sos_file)
+        self.reach_ids = self.__get_reach_ids(sos_file)
         self.sos_file = sos_file
 
     def __get_offline_ids(self, offline_dir):
@@ -124,7 +124,7 @@ class ValidationConfluence:
             reach_ids = [ int(entry.name.split('_')[0]) for entry in entries ]
         return(np.array(reach_ids))
 
-    def get_reach_ids(self, sos_file):
+    def __get_reach_ids(self, sos_file):
         """Retreive reach identifiers from SoS file.
         
         Parameters
@@ -237,7 +237,7 @@ class ValidationConfluence:
                     
                     # Stats
                     data = stats(time, self.offline_data, qt, q, str(reach),
-                        self.fig_dir)
+                        self.output_dir / "figs")
             self.write(data, time, reach, self.gage_data["type"])
 
     def write(self, stats, time, reach_id, gage_type):
@@ -258,7 +258,7 @@ class ValidationConfluence:
         fill = -999999999999
         empty = -9999
 
-        out = Dataset(self.output_dir / f"{reach_id}_validation.nc", 'w')
+        out = Dataset(self.output_dir / "stats" / f"{reach_id}_validation.nc", 'w')
         out.reach_id = reach_id
         out.description = f"Statistics for reach: {reach_id}"
         out.history = datetime.now().strftime('%d-%b-%Y %H:%M:%S')
@@ -292,6 +292,25 @@ class ValidationConfluence:
         n_v[:] = np.where(np.isclose(stats["n"], empty), fill, stats["n"])
 
         out.close()
+
+def copy_sos_data(sos_dir):
+        """Copy S3 SoS constrained data to output directory.
+        
+        Parameters
+        ----------
+        sos_dir: Path
+            path to directory to store SoS files
+        """
+        
+        confluence_fs = s3fs.S3FileSystem(key=confluence_creds["key"],
+                                        secret=confluence_creds["secret"],
+                                        client_kwargs={"region_name": confluence_creds["region"]})
+        run_type = "constrained"
+        dirs = confluence_fs.ls(f"confluence-sos/{run_type}")
+        curr_dir = max(dirs)
+        files = confluence_fs.glob(f"{curr_dir}/*.nc")
+        for file in files:
+            confluence_fs.download(file, f"{str(sos_dir)}/{file.split('/')[-1]}")
 
 def get_cont_data(cont_json, index):
     """Extract and return the continent data needs to be extracted for.
@@ -328,8 +347,11 @@ def run_validation():
         cont_json = "continent.json"
     cont_data = get_cont_data(INPUT / cont_json, index)
 
-    sos_file = INPUT / "sos" / f"{list(cont_data.keys())[0]}_apriori_rivers_v07_SOS.nc"
-    vc = ValidationConfluence(cont_data, OFFLINE_DIR, sos_file, INPUT, OUTPUT, FIG_DIR)
+    # Download most recent constrained SoS for gage data
+    copy_sos_data(SOS_DIR)
+    sos_file = SOS_DIR / f"{list(cont_data.keys())[0]}_apriori_rivers_v07_SOS.nc"
+    
+    vc = ValidationConfluence(cont_data, OFFLINE_DIR, sos_file, INPUT, OUTPUT)
     vc.read_gage_data()
     
     ## TODO sac reach ids
