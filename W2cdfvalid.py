@@ -24,7 +24,7 @@ def write(Vout,IDstr,SWt):
        Adim = ds.createDimension('Adim', len(Vout['algorithm']))  
        Tdim=ds.createDimension('Tdim', len(SWt))
        # create var
-       algorithm = ds.createVariable('algorithim', 'S1', ('Adim',))
+       algorithm = ds.createVariable('algorithim', 'str', ('Adim',))
       
        #
        NSE = ds.createVariable('NSE', 'f4', ('Adim',))  
@@ -36,9 +36,12 @@ def write(Vout,IDstr,SWt):
        #
        INdates= ds.createVariable('INdates', 'f4', ('Tdim',))
        INdates.units = 'days since Jan 1 Year 1'
-       # fill var  
-       algorithm[:]= list(Vout['algorithm'])
-       #
+       # fill var
+       alglist=list(Vout['algorithm'])
+       for alg in range(len(alglist)):
+           algorithm[alg]= alglist[alg]    
+       
+        #
        NSE[:] = Vout['NSE']
        Rsq[:] = Vout['Rsq']
        KGE[:] = Vout['KGE']
