@@ -349,7 +349,7 @@ def run_validation():
 
     # Download most recent constrained SoS for gage data
     copy_sos_data(SOS_DIR)
-    sos_file = SOS_DIR / f"{list(cont_data.keys())[0]}_apriori_rivers_v07_SOS.nc"
+    sos_file = SOS_DIR / f"{list(cont_data.keys())[0]}_sword_v11_SOS.nc"
     
     vc = ValidationConfluence(cont_data, OFFLINE_DIR, sos_file, INPUT, OUTPUT)
     vc.read_gage_data()
