@@ -1,5 +1,5 @@
-# Stage 0 - Create from Python3.9.5 image
-FROM python:slim-buster as stage0
+# Stage 0 - Create from Python3.9.7 image
+FROM python:3.9.7-slim-buster as stage0
 
 # Stage 2 - Create virtual environment and install dependencies
 FROM stage0 as stage1
