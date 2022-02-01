@@ -18,4 +18,4 @@ LABEL version="1.0" \
 	description="Containerized MOI algorithm." \
 	"confluence.contact"="ntebaldi@umass.edu" \
 	"algorithm.contact"="coss.31@osu.edu"
-ENTRYPOINT ["/app/env/bin/python3", "/app/ValidationConfluence.py"]
+ENTRYPOINT ["/app/env/bin/python3", "/app/validation_confluence.py"]
