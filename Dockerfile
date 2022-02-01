@@ -13,7 +13,7 @@ COPY ./val /app/val/
 
 # Stage 3 - Execute algorithm
 FROM stage2 as stage3
-COPY ValidationConfluence.py /app/ValidationConfluence.py
+COPY validation_confluence.py /app/validation_confluence.py
 LABEL version="1.0" \
 	description="Containerized MOI algorithm." \
 	"confluence.contact"="ntebaldi@umass.edu" \
