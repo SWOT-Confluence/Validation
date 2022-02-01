@@ -39,12 +39,9 @@ from netCDF4 import Dataset, stringtochar
 import numpy as np
 
 # Constants
-# INPUT = Path("/mnt/data/input")
-# OFFLINE_DIR = Path("/mnt/data/offline")
-# OUTPUT = Path("/mnt/data/output")
-INPUT = Path("/home/nikki/Documents/confluence/workspace/validation/data/input")
-OFFLINE = Path("/home/nikki/Documents/confluence/workspace/validation/data/offline")
-OUTPUT = Path("/home/nikki/Documents/confluence/workspace/validation/data/output")
+INPUT = Path("/mnt/data/input")
+OFFLINE = Path("/mnt/data/offline")
+OUTPUT = Path("/mnt/data/output")
 
 class ValidationConfluence:
     """Class that runs validation operations for Confluence workflow.
@@ -313,18 +310,13 @@ def get_reach_data(input_json):
         dictionary of reach data
         """
         
-        # index = int(os.environ.get("AWS_BATCH_JOB_ARRAY_INDEX"))
-        index = 195
+        index = int(os.environ.get("AWS_BATCH_JOB_ARRAY_INDEX"))
         with open(INPUT / input_json) as json_file:
             reach_data = json.load(json_file)[index]
         return reach_data
 
 def run_validation():
-    """Orchestrate validation operations.
-    
-    TODO
-    - Remove restriction of only running on sac data
-    """
+    """Orchestrate validation operations."""
 
     try:
         reach_json = sys.argv[1]
