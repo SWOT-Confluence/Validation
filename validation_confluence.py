@@ -242,17 +242,15 @@ class ValidationConfluence:
             
         # Write out valid or invalid data
         gage_type = "No data" if not self.gage_data else self.gage_data["type"]
-        self.write(data, time, self.reach_id, gage_type)
+        self.write(data, self.reach_id, gage_type)
 
-    def write(self, stats, time, reach_id, gage_type):
+    def write(self, stats, reach_id, gage_type):
         """Write stats to NetCDF file.
         
         Parameters
         ----------
         stats: dict
             dictionary of stats for each algorithm
-        time: list
-            list of observation times
         reach_id: int
             reach identifier for stats
         gage_type: str
@@ -271,10 +269,10 @@ class ValidationConfluence:
 
         a_dim = out.createDimension("num_algos", None)
         c_dim = out.createDimension("nchar", None)
-        t_dim = out.createDimension("time", len(time))
-        t_v = out.createVariable("time", "f4", ("time",))
+        t_dim = out.createDimension("time", len(stats["t"]))
+        t_v = out.createVariable("time", "i4", ("time",))
         t_v.units = "days since Jan 1 Year 1"
-        t_v[:] = time
+        t_v[:] = stats["t"]
 
         a_v = out.createVariable("algorithm", 'S1', ("num_algos", "nchar"),)
         a_v[:] = stringtochar(stats["algorithm"].astype("S16"))
