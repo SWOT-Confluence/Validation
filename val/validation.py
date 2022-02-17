@@ -50,7 +50,9 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 olt,idV,ids=np.intersect1d(Vt_,St_,return_indices=True)
                 Vt_t=Vt_[idV]
                 Vq_t=Vq_[idV]
-               
+                St_ = St_[ids]
+                Sq_ = Sq_[ids]
+                
                 # NSE
                 top=np.sum((Sq_-Vq_t)**2)
                 bottom=np.sum(Vq_t-np.mean(Vq_t))**2
@@ -82,12 +84,13 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
             "Rsq":Rsqo[:],
             "KGE":KGEo[:],
             "RMSE":RMSEo[:],
-            "n":no[:]      
+            "n":no[:],
+            "t":St_       
             }
     else:
         
-        for Grp in Sq:    
-            Sq_=Sq[Grp]       
+        for Grp in Sq:
+            Sq_=Sq[Grp]     
             Sq_=Sq_[ids]           
             St__= St[ids]
             alg=Grp
@@ -98,6 +101,8 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 olt,idV,ids=np.intersect1d(Vt_,St_,return_indices=True)
                 Vt_t=Vt_[idV]
                 Vq_t=Vq_[idV]
+                St_ = St_[ids]
+                Sq_ = Sq_[ids]
                 #plot and save
                 strDates = []               
                 for day in Vt_t:
@@ -116,7 +121,6 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 figname=f"{figdir}/{IDstr}_{alg}.jpg"
                 fig.savefig(figname)
                 
-    
                 # NSE
                 top=np.sum((Sq_-Vq_t)**2)
                 bottom=np.sum(Vq_-np.mean(Vq_t))**2
@@ -149,7 +153,8 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
             "Rsq":Rsqo[:],
             "KGE":KGEo[:],
             "RMSE":RMSEo[:],
-            "n":no[:]      
+            "n":no[:],
+            "t":St_     
             }
    
     return  validout
