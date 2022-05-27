@@ -115,6 +115,16 @@ class ValidationConfluence:
             gage_data = self.get_gage_q(sos, "usgs")
         elif "grdc" in groups:
             gage_data = self.get_gage_q(sos, "grdc")
+        elif "Hidroweb" in groups:
+            gage_data = self.get_gage_q(sos, "Hidroweb")
+        elif "ABOM" in groups:
+            gage_data = self.get_gage_q(sos, "ABOM")
+        elif "WSC" in groups:
+            gage_data = self.get_gage_q(sos, "WSC")
+        elif "MLIT" in groups:
+            gage_data = self.get_gage_q(sos, "MLIT")
+        elif "DEFRA" in groups:
+            gage_data = self.get_gage_q(sos, "DEFRA")
         sos.close()
         return gage_data
     
