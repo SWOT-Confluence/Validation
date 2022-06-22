@@ -39,9 +39,12 @@ from netCDF4 import Dataset, stringtochar
 import numpy as np
 
 # Constants
-INPUT = Path("/mnt/data/input")
-OFFLINE = Path("/mnt/data/offline")
-OUTPUT = Path("/mnt/data/output")
+#INPUT = Path("/mnt/data/input")
+#OFFLINE = Path("/mnt/data/offline")
+#OUTPUT = Path("/mnt/data/output")
+INPUT = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/input')
+OFFLINE = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/offline')
+OUTPUT = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/output')
 
 class ValidationConfluence:
     """Class that runs validation operations for Confluence workflow.
@@ -252,7 +255,9 @@ class ValidationConfluence:
             
         # Write out valid or invalid data
         gage_type = "No data" if not self.gage_data else self.gage_data["type"]
-        self.write(data, self.reach_id, gage_type)
+
+        if not gage_type == "No data":
+            self.write(data, self.reach_id, gage_type)
 
     def write(self, stats, reach_id, gage_type):
         """Write stats to NetCDF file.
@@ -305,7 +310,7 @@ class ValidationConfluence:
 
         out.close()
 
-def get_reach_data(input_json):
+def get_reach_data(input_json,index_to_run):
         """Retrun dictionary of reach data.
         
         Parameters
@@ -318,7 +323,11 @@ def get_reach_data(input_json):
         dictionary of reach data
         """
         
-        index = int(os.environ.get("AWS_BATCH_JOB_ARRAY_INDEX"))
+        if index_to_run == -235:
+            index = int(os.environ.get("AWS_BATCH_JOB_ARRAY_INDEX"))
+        else: 
+            index=index_to_run
+
         with open(INPUT / input_json) as json_file:
             reach_data = json.load(json_file)[index]
         return reach_data
@@ -330,7 +339,13 @@ def run_validation():
         reach_json = sys.argv[1]
     except IndexError:
         reach_json = "reaches.json"
-    reach_data = get_reach_data(reach_json)
+
+    try:
+        index_to_run=int(sys.argv[2]) #integer
+    except IndexError:
+        index_to_run=-235 #code to indicate AWS run
+
+    reach_data = get_reach_data(reach_json,index_to_run)
 
     vc = ValidationConfluence(reach_data, OFFLINE, INPUT, OUTPUT)
     vc.validate()
