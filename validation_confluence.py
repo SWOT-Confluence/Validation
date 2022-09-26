@@ -39,12 +39,12 @@ from netCDF4 import Dataset, stringtochar
 import numpy as np
 
 # Constants
-#INPUT = Path("/mnt/data/input")
-#OFFLINE = Path("/mnt/data/offline")
-#OUTPUT = Path("/mnt/data/output")
-INPUT = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/input')
-OFFLINE = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/offline')
-OUTPUT = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/output')
+INPUT = Path("/mnt/data/input")
+OFFLINE = Path("/mnt/data/offline")
+OUTPUT = Path("/mnt/data/output")
+# INPUT = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/input')
+# OFFLINE = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/offline')
+# OUTPUT = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/output')
 
 class ValidationConfluence:
     """Class that runs validation operations for Confluence workflow.
@@ -244,7 +244,7 @@ class ValidationConfluence:
             "Rsq": np.full((self.NUM_ALGOS), fill_value=-9999),
             "KGE": np.full((self.NUM_ALGOS), fill_value=-9999),
             "RMSE": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "n": np.full((self.NUM_ALGOS), fill_value=-9999)
+            "n": np.full((self.NUM_ALGOS), fill_value=-9999),
         }
         
         # Check if there is data to validate
