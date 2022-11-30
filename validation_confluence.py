@@ -105,11 +105,12 @@ class ValidationConfluence:
         """
         
         self.input_dir = input_dir
+        self.run_type = run_type
         self.reach_id = reach_data["reach_id"]
         self.gage_data = self.read_gage_data(input_dir / "sos" / reach_data["sos"])
         self.offline_data = self.read_offline_data(offline_dir)
         self.output_dir = output_dir
-        self.run_type = run_type
+
 
     def read_gage_data(self, sos_file):
         """Read gage data from SoS file and stores in gage data dictionary."""
@@ -157,14 +158,16 @@ class ValidationConfluence:
         rids = gage[f"{gage_type}_reach_id"][:].filled(np.nan)
         index = np.where(self.reach_id == rids) 
         
-        # if constraind check and see if the gage selected at this index is a 0
-        if self.run_type == "constrained":
-            if gage["CAL"][:][index] == 1:
-                index = []
+
+
             
 
         gage_data = {}
         if len(index[0]) != 0:
+            if self.run_type == "constrained":
+                # if constraind check and see if the gage selected at this index is a 0
+                if gage["CAL"][:][index] == 1:
+                    return gage_data
             gage_data["type"] = gage_type
             gage_data["q"] = gage[f"{gage_type}_q"][index][:].filled(np.nan)
             if gage_type == "usgs":
