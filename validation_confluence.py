@@ -87,7 +87,7 @@ class ValidationConfluence:
     INT_FILL = -999
     NUM_ALGOS = 10
 
-    def __init__(self, reach_data, offline_dir, input_dir, output_dir):
+    def __init__(self, reach_data, offline_dir, input_dir, output_dir, run_type):
 
         """
         Parameters
@@ -100,6 +100,8 @@ class ValidationConfluence:
             path to input directory
         output_dir: Path
             path to output directory
+        run_type: str
+            string indicating if we are doing a constrained or unconstrained run
         """
         
         self.input_dir = input_dir
@@ -107,12 +109,15 @@ class ValidationConfluence:
         self.gage_data = self.read_gage_data(input_dir / "sos" / reach_data["sos"])
         self.offline_data = self.read_offline_data(offline_dir)
         self.output_dir = output_dir
+        self.run_type = run_type
 
     def read_gage_data(self, sos_file):
         """Read gage data from SoS file and stores in gage data dictionary."""
 
         sos = Dataset(sos_file, 'r')
-        groups = list(sos["model"].groups.keys())
+
+        # could be optimized using the global gage_agency varaible
+        groups = list(sos.groups.keys())
         gage_data = {}
         if "usgs" in groups:
             gage_data = self.get_gage_q(sos, "usgs")
@@ -148,10 +153,16 @@ class ValidationConfluence:
         dictionary of discharge and discharge time
         """
         
-        gage = sos["model"][gage_type]
+        gage = sos[gage_type]
         rids = gage[f"{gage_type}_reach_id"][:].filled(np.nan)
-        index = np.where(self.reach_id == rids)
+        index = np.where(self.reach_id == rids) 
         
+        # if constraind check and see if the gage selected at this index is a 0
+        if self.run_type == "constrained":
+            if gage["CAL"][:][index] == 1:
+                index = []
+            
+
         gage_data = {}
         if len(index[0]) != 0:
             gage_data["type"] = gage_type
@@ -337,17 +348,19 @@ def run_validation():
 
     try:
         reach_json = sys.argv[1]
+        run_type = sys.argv[2]
     except IndexError:
         reach_json = "reaches.json"
+        run_type = "unconstrained"
 
     try:
-        index_to_run=int(sys.argv[2]) #integer
+        index_to_run=int(sys.argv[3]) #integer
     except IndexError:
         index_to_run=-235 #code to indicate AWS run
 
     reach_data = get_reach_data(reach_json,index_to_run)
 
-    vc = ValidationConfluence(reach_data, OFFLINE, INPUT, OUTPUT)
+    vc = ValidationConfluence(reach_data, OFFLINE, INPUT, OUTPUT, run_type)
     vc.validate()
 
 if __name__ == "__main__": 
