@@ -30,6 +30,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import warnings
 
 # Local imports
 from val.validation import stats
@@ -243,7 +244,17 @@ class ValidationConfluence:
         time = swot["reach"]["time"][:].filled(np.nan)
         swot.close()
         epoch = datetime.datetime(2000,1,1,0,0,0)
-        return [ (epoch + datetime.timedelta(seconds=t)).toordinal() for t in time ]   # Check if this format works
+        ordinal_times = []
+
+        for t in time:
+            try:
+                ordinal_times.append((epoch + datetime.timedelta(seconds=t)).toordinal())
+            except:
+                ordinal_times.append(np.nan)
+                print(time)
+                warnings.warn('problem with time conversion to ordinal, most likely nan value')
+        # return [ (epoch + datetime.timedelta(seconds=t)).toordinal() for t in time ]   # Check if this format works
+        return ordinal_times
 
     def validate(self):
         """Run validation operations on gage data and FLPE data; write stats."""
