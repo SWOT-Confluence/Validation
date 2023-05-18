@@ -277,6 +277,8 @@ class ValidationConfluence:
             data = stats(time, self.offline_data, self.gage_data["qt"], 
                          self.gage_data["q"], str(self.reach_id), 
                          self.output_dir / "figs")
+        else:
+            warnings.warn('no gauge found for reach...')
             
         # Write out valid or invalid data
         gage_type = "No data" if not self.gage_data else self.gage_data["type"]
