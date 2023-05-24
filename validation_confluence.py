@@ -135,6 +135,8 @@ class ValidationConfluence:
             gage_data = self.get_gage_q(sos, "MLIT")
         elif "DEFRA" in groups:
             gage_data = self.get_gage_q(sos, "DEFRA")
+        elif "EAU" in groups:
+            gage_data = self.get_gage_q(sos, "EAU")
         sos.close()
         return gage_data
     
