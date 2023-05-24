@@ -108,6 +108,7 @@ class ValidationConfluence:
         self.input_dir = input_dir
         self.run_type = run_type
         self.reach_id = reach_data["reach_id"]
+        print('Processing', self.reach_id)
         self.gage_data = self.read_gage_data(input_dir / "sos" / reach_data["sos"])
         self.offline_data = self.read_offline_data(offline_dir)
         self.output_dir = output_dir
@@ -135,8 +136,9 @@ class ValidationConfluence:
             gage_data = self.get_gage_q(sos, "MLIT")
         elif "DEFRA" in groups:
             gage_data = self.get_gage_q(sos, "DEFRA")
-        elif "EAU" in groups:
-            gage_data = self.get_gage_q(sos, "EAU")
+            if gage_data == {}:
+                gage_data = self.get_gage_q(sos, "EAU")
+            
         sos.close()
         return gage_data
     
@@ -170,6 +172,7 @@ class ValidationConfluence:
             if self.run_type == "constrained":
                 # if constraind check and see if the gage selected at this index is a 0
                 if gage["CAL"][:][index] == 1:
+                    warnings.warn('gauge found was calibration.. This is an unconstrained run, so it will not be used for validation')
                     return gage_data
             gage_data["type"] = gage_type
             gage_data["q"] = gage[f"{gage_type}_q"][index][:].filled(np.nan)
@@ -275,12 +278,16 @@ class ValidationConfluence:
         }
         
         # Check if there is data to validate
-        if self.gage_data and self.offline_data:
-            data = stats(time, self.offline_data, self.gage_data["qt"], 
-                         self.gage_data["q"], str(self.reach_id), 
-                         self.output_dir / "figs")
+        if self.gage_data:
+            if self.offline_data:
+                #### Check should go here for all nan gauge data ---------------------------------
+                data = stats(time, self.offline_data, self.gage_data["qt"], 
+                            self.gage_data["q"], str(self.reach_id), 
+                            self.output_dir / "figs")
+            else:
+                warnings.warn('No offline data found...')
         else:
-            warnings.warn('no gauge found for reach...')
+            warnings.warn('No gauge found for reach...')
             
         # Write out valid or invalid data
         gage_type = "No data" if not self.gage_data else self.gage_data["type"]
