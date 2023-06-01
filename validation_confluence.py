@@ -276,7 +276,7 @@ class ValidationConfluence:
             "RMSE": np.full((self.NUM_ALGOS), fill_value=-9999),
             "n": np.full((self.NUM_ALGOS), fill_value=-9999),
         }
-        
+        no_offline = False
         # Check if there is data to validate
         if self.gage_data:
             if self.offline_data:
@@ -286,13 +286,14 @@ class ValidationConfluence:
                             self.output_dir / "figs")
             else:
                 warnings.warn('No offline data found...')
+                no_offline = True
         else:
             warnings.warn('No gauge found for reach...')
             
         # Write out valid or invalid data
         gage_type = "No data" if not self.gage_data else self.gage_data["type"]
 
-        if not gage_type == "No data":
+        if (gage_type != "No data") and (no_offline != False):
             self.write(data, self.reach_id, gage_type)
 
     def write(self, stats, reach_id, gage_type):
