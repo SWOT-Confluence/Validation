@@ -293,7 +293,7 @@ class ValidationConfluence:
         # Write out valid or invalid data
         gage_type = "No data" if not self.gage_data else self.gage_data["type"]
 
-        if (gage_type != "No data") and (no_offline != False):
+        if (gage_type != "No data") and (no_offline != True):
             self.write(data, self.reach_id, gage_type)
 
     def write(self, stats, reach_id, gage_type):
