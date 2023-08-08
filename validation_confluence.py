@@ -195,20 +195,37 @@ class ValidationConfluence:
         -------
         dictionary of algorithm offline results
         """
+        convention_dict = {
+            "metro_q_c":"dschg_gm",
+            "bam_q_c":"dschg_gb",
+            "hivdi_q_c":"dschg_gh",
+            "momma_q_c":"dschg_go",
+            "sads_q_c":"dschg_gs",
+            "consensus_q_c":"dschg_gc",
+            "metro_q_uc":"dschg_m",
+            "bam_q_uc":"dschg_b",
+            "hivdi_q_uc":"dschg_h",
+            "momma_q_uc":"dschg_o",
+            "sads_q_uc":"dschg_s",
+            # "sic4dvar_q_uc":"dschg_i",
+            "consensus_q_uc":"dschg_c",
+            "d_x_area":"d_x_area",
+            "d_x_area_u":"d_x_area_u",
+        }
 
         offline_file = f"{offline_dir}/{self.reach_id}_offline.nc"
         off = Dataset(offline_file, 'r')
         offline_data = {}
-        offline_data["geobam_q_c"] = off["bam_q_c"][:].filled(np.nan)
-        offline_data["hivdi_q_c"] = off["hivdi_q_c"][:].filled(np.nan)
-        offline_data["metroman_q_c"] = off["metro_q_c"][:].filled(np.nan)
-        offline_data["momma_q_c"] = off["momma_q_c"][:].filled(np.nan)
-        offline_data["sad_q_c"] = off["sads_q_c"][:].filled(np.nan)
-        offline_data["geobam_q_uc"] = off["bam_q_uc"][:].filled(np.nan)
-        offline_data["hivdi_q_uc"] = off["hivdi_q_uc"][:].filled(np.nan)
-        offline_data["metroman_q_uc"] = off["metro_q_uc"][:].filled(np.nan)
-        offline_data["momma_q_uc"] = off["momma_q_uc"][:].filled(np.nan)
-        offline_data["sad_q_uc"] = off["sads_q_uc"][:].filled(np.nan)
+        offline_data["geobam_q_c"] = off[convention_dict["bam_q_c"]][:].filled(np.nan)
+        offline_data["hivdi_q_c"] = off[convention_dict["hivdi_q_c"]][:].filled(np.nan)
+        offline_data["metroman_q_c"] = off[convention_dict["metro_q_c"]][:].filled(np.nan)
+        offline_data["momma_q_c"] = off[convention_dict["momma_q_c"]][:].filled(np.nan)
+        offline_data["sad_q_c"] = off[convention_dict["sads_q_c"]][:].filled(np.nan)
+        offline_data["geobam_q_uc"] = off[convention_dict["bam_q_uc"]][:].filled(np.nan)
+        offline_data["hivdi_q_uc"] = off[convention_dict["hivdi_q_uc"]][:].filled(np.nan)
+        offline_data["metroman_q_uc"] = off[convention_dict["metro_q_uc"]][:].filled(np.nan)
+        offline_data["momma_q_uc"] = off[convention_dict["momma_q_uc"]][:].filled(np.nan)
+        offline_data["sad_q_uc"] = off[convention_dict["sads_q_uc"]][:].filled(np.nan)
         off.close()
         
         if self.is_offline_valid(offline_data):
