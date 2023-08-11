@@ -35,6 +35,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
     KGEo=[]
     RMSEo=[]
     no=[]
+    offkey=[]
     if len(Sq)<10:
         for Grp in Sq:    
             Sq_=Sq[Grp]       
@@ -72,14 +73,18 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 #RMSE
                 RMSE=np.sqrt((np.sum( Sq_ - Vq_t)**2)/n)
                 RMSEo.append(RMSE)
+                offkey.append(Grp)
             else:
                     NSEo.append(EMPTY)
                     Rsqo.append(EMPTY)
                     KGEo.append(EMPTY)
                     no.append(EMPTY)
                     RMSEo.append(EMPTY)
+                    offkey.append(EMPTY)
+                    
+       
         validout={
-            "algorithm": np.array(['geobam','hivdi','metroman','momma']),
+            "algorithm": np.array([offkey]),
             "NSE":NSEo[:],
             "Rsq":Rsqo[:],
             "KGE":KGEo[:],
@@ -140,15 +145,16 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 #RMSE
                 RMSE=np.sqrt((np.sum( Sq_ - Vq_t)**2)/n)
                 RMSEo.append(RMSE)
+                offkey.append(Grp)
             else:
                     NSEo.append(EMPTY)
                     Rsqo.append(EMPTY)
                     KGEo.append(EMPTY)
                     no.append(EMPTY)
                     RMSEo.append(EMPTY)
+                    offkey.append(EMPTY)
         validout={
-            "algorithm": np.array(['geobam_q_c','hivdi_q_c','metroman_q_c','momma_q_c','sad_q_c',
-                          'geobam_q_uc','hivdi_q_uc','metroman_q_uc','momma_q_uc','sad_q_uc']),
+            "algorithm": np.array([offkey]),
             "NSE":NSEo[:],
             "Rsq":Rsqo[:],
             "KGE":KGEo[:],

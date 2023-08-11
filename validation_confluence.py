@@ -226,6 +226,8 @@ class ValidationConfluence:
         offline_data["metroman_q_uc"] = off[convention_dict["metro_q_uc"]][:].filled(np.nan)
         offline_data["momma_q_uc"] = off[convention_dict["momma_q_uc"]][:].filled(np.nan)
         offline_data["sad_q_uc"] = off[convention_dict["sads_q_uc"]][:].filled(np.nan)
+        offline_data["consensus_q_c"] = off[convention_dict["consensus_q_c"]][:].filled(np.nan)
+        offline_data["consensus_q_uc"] = off[convention_dict["consensus_q_uc"]][:].filled(np.nan)
         off.close()
         
         if self.is_offline_valid(offline_data):
