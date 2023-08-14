@@ -34,6 +34,9 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
     Rsqo=[]
     KGEo=[]
     RMSEo=[]
+    nRMSEo=[]
+    nBIASo=[]
+    rRMSEo=[]
     no=[]
     offkey=[]
     if len(Sq)<10:
@@ -74,6 +77,16 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 RMSE=np.sqrt((np.sum( Sq_ - Vq_t)**2)/n)
                 RMSEo.append(RMSE)
                 offkey.append(Grp)
+                #nRMSE
+                NRMSE=RMSE/np.mean(Vq_t)
+                nRMSEo.append(NRMSE)
+                #nBIASo
+                BIAS= np.sum(Sq_ - Vq_t)/len( Vq_t)
+                nBIAS=BIAS/np.mean(Vq_t)
+                nBIASo.append(nBIAS)
+                #rRMSE
+                rRMSEo.append(np.sqrt(NRMSE**2-nBIAS**2))
+                
             else:
                     NSEo.append(EMPTY)
                     Rsqo.append(EMPTY)
@@ -81,6 +94,9 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                     no.append(EMPTY)
                     RMSEo.append(EMPTY)
                     offkey.append(EMPTY)
+                    nRMSEo.append(EMPTY)
+                    nBIASo.append(EMPTY)
+                    rRMSEo.append(EMPTY)
                     
        
         validout={
@@ -89,6 +105,9 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
             "Rsq":Rsqo[:],
             "KGE":KGEo[:],
             "RMSE":RMSEo[:],
+            "nRMSE":nRMSEo[:],
+            "nBIAS":nBIASo[:],
+            "rRMSE":rRMSEo[:],
             "n":no[:],
             "t":St_       
             }
@@ -146,6 +165,15 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 RMSE=np.sqrt((np.sum( Sq_ - Vq_t)**2)/n)
                 RMSEo.append(RMSE)
                 offkey.append(Grp)
+                #nRMSE
+                NRMSE=RMSE/np.mean(Vq_t)
+                nRMSEo.append(NRMSE)
+                #nBIASo
+                BIAS= np.sum(Sq_ - Vq_t)/len( Vq_t)
+                nBIAS=BIAS/np.mean(Vq_t)
+                nBIASo.append(nBIAS)
+                #rRMSE
+                rRMSEo.append(np.sqrt(NRMSE**2-nBIAS**2))
             else:
                     NSEo.append(EMPTY)
                     Rsqo.append(EMPTY)
@@ -153,12 +181,18 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                     no.append(EMPTY)
                     RMSEo.append(EMPTY)
                     offkey.append(EMPTY)
+                    nRMSEo.append(EMPTY)
+                    nBIASo.append(EMPTY)
+                    rRMSEo.append(EMPTY)
         validout={
             "algorithm": np.array([offkey]),
             "NSE":NSEo[:],
             "Rsq":Rsqo[:],
             "KGE":KGEo[:],
             "RMSE":RMSEo[:],
+            "nRMSE":nRMSEo[:],
+            "nBIAS":nBIASo[:],
+            "rRMSE":rRMSEo[:],
             "n":no[:],
             "t":St_     
             }

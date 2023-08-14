@@ -360,6 +360,18 @@ class ValidationConfluence:
         rmse_v = out.createVariable("RMSE", "f8", ("num_algos",), fill_value=fill)
         rmse_v.units = "m^3/s"
         rmse_v[:] = np.where(np.isclose(stats["RMSE"], empty), fill, stats["RMSE"])
+        
+        nrmse_v = out.createVariable("nRMSE", "f8", ("num_algos",), fill_value=fill)
+        nrmse_v.units = "none"
+        nrmse_v[:] = np.where(np.isclose(stats["nRMSE"], empty), fill, stats["nRMSE"])
+        
+        nb_v = out.createVariable("nBIAS", "f8", ("num_algos",), fill_value=fill)
+        nb_v.units = "none"
+        nb_v[:] = np.where(np.isclose(stats["nBIAS"], empty), fill, stats["nBIAS"])
+        
+        rrmse_v = out.createVariable("rRMSE", "f8", ("num_algos",), fill_value=fill)
+        rrmse_v.units = "none"
+        rrmse_v[:] = np.where(np.isclose(stats["rRMSE"], empty), fill, stats["rRMSE"])
 
         n_v = out.createVariable("testn", "f8", ("num_algos",), fill_value=fill)
         n_v[:] = np.where(np.isclose(stats["n"], empty), fill, stats["n"])
