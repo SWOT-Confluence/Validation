@@ -216,16 +216,18 @@ class ValidationConfluence:
         offline_file = f"{offline_dir}/{self.reach_id}_offline.nc"
         off = Dataset(offline_file, 'r')
         offline_data = {}
-        offline_data["geobam_q_c"] = off[convention_dict["bam_q_c"]][:].filled(np.nan)
-        offline_data["hivdi_q_c"] = off[convention_dict["hivdi_q_c"]][:].filled(np.nan)
-        offline_data["metroman_q_c"] = off[convention_dict["metro_q_c"]][:].filled(np.nan)
-        offline_data["momma_q_c"] = off[convention_dict["momma_q_c"]][:].filled(np.nan)
-        offline_data["sad_q_c"] = off[convention_dict["sads_q_c"]][:].filled(np.nan)
-        offline_data["geobam_q_uc"] = off[convention_dict["bam_q_uc"]][:].filled(np.nan)
-        offline_data["hivdi_q_uc"] = off[convention_dict["hivdi_q_uc"]][:].filled(np.nan)
-        offline_data["metroman_q_uc"] = off[convention_dict["metro_q_uc"]][:].filled(np.nan)
-        offline_data["momma_q_uc"] = off[convention_dict["momma_q_uc"]][:].filled(np.nan)
-        offline_data["sad_q_uc"] = off[convention_dict["sads_q_uc"]][:].filled(np.nan)
+        offline_data[convention_dict["bam_q_c"]] = off[convention_dict["bam_q_c"]][:].filled(np.nan)
+        offline_data[convention_dict["hivdi_q_c"]] = off[convention_dict["hivdi_q_c"]][:].filled(np.nan)
+        offline_data[convention_dict["metro_q_c"]] = off[convention_dict["metro_q_c"]][:].filled(np.nan)
+        offline_data[convention_dict["momma_q_c"]] = off[convention_dict["momma_q_c"]][:].filled(np.nan)
+        offline_data[convention_dict["sads_q_c"]] = off[convention_dict["sads_q_c"]][:].filled(np.nan)
+        offline_data[convention_dict["bam_q_uc"]] = off[convention_dict["bam_q_uc"]][:].filled(np.nan)
+        offline_data[convention_dict["hivdi_q_uc"]] = off[convention_dict["hivdi_q_uc"]][:].filled(np.nan)
+        offline_data[convention_dict["metro_q_uc"]] = off[convention_dict["metro_q_uc"]][:].filled(np.nan)
+        offline_data[convention_dict["momma_q_uc"]] = off[convention_dict["momma_q_uc"]][:].filled(np.nan)
+        offline_data[convention_dict["sads_q_uc"]] = off[convention_dict["sads_q_uc"]][:].filled(np.nan)
+        offline_data[convention_dict["consensus_q_c"]] = off[convention_dict["consensus_q_c"]][:].filled(np.nan)
+        offline_data[convention_dict["consensus_q_uc"]] = off[convention_dict["consensus_q_uc"]][:].filled(np.nan)
         off.close()
         
         if self.is_offline_valid(offline_data):
@@ -292,6 +294,9 @@ class ValidationConfluence:
             "KGE": np.full((self.NUM_ALGOS), fill_value=-9999),
             "RMSE": np.full((self.NUM_ALGOS), fill_value=-9999),
             "n": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "nRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "nBIAS":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "rRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),
         }
         no_offline = False
         # Check if there is data to validate
@@ -344,7 +349,7 @@ class ValidationConfluence:
         t_v[:] = stats["t"]
 
         a_v = out.createVariable("algorithm", 'S1', ("num_algos", "nchar"),)
-        a_v[:] = stringtochar(stats["algorithm"].astype("S16"))
+        a_v[:] = stringtochar(stats["algorithm"][0].astype("S16"))
         
         nse_v = out.createVariable("NSE", "f8", ("num_algos",), fill_value=fill)
         nse_v[:] = np.where(np.isclose(stats["NSE"], empty), fill, stats["NSE"])
@@ -358,6 +363,18 @@ class ValidationConfluence:
         rmse_v = out.createVariable("RMSE", "f8", ("num_algos",), fill_value=fill)
         rmse_v.units = "m^3/s"
         rmse_v[:] = np.where(np.isclose(stats["RMSE"], empty), fill, stats["RMSE"])
+        
+        nrmse_v = out.createVariable("nRMSE", "f8", ("num_algos",), fill_value=fill)
+        nrmse_v.units = "none"
+        nrmse_v[:] = np.where(np.isclose(stats["nRMSE"], empty), fill, stats["nRMSE"])
+        
+        nb_v = out.createVariable("nBIAS", "f8", ("num_algos",), fill_value=fill)
+        nb_v.units = "none"
+        nb_v[:] = np.where(np.isclose(stats["nBIAS"], empty), fill, stats["nBIAS"])
+        
+        rrmse_v = out.createVariable("rRMSE", "f8", ("num_algos",), fill_value=fill)
+        rrmse_v.units = "none"
+        rrmse_v[:] = np.where(np.isclose(stats["rRMSE"], empty), fill, stats["rRMSE"])
 
         n_v = out.createVariable("testn", "f8", ("num_algos",), fill_value=fill)
         n_v[:] = np.where(np.isclose(stats["n"], empty), fill, stats["n"])

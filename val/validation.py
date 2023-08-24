@@ -34,7 +34,11 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
     Rsqo=[]
     KGEo=[]
     RMSEo=[]
+    nRMSEo=[]
+    nBIASo=[]
+    rRMSEo=[]
     no=[]
+    offkey=[]
     if len(Sq)<10:
         for Grp in Sq:    
             Sq_=Sq[Grp]       
@@ -70,20 +74,40 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 n=len(Vq_t)
                 no.append(n)
                 #RMSE
-                RMSE=np.sqrt((np.sum( Sq_ - Vq_t)**2)/n)
+                RMSE=np.sqrt((np.sum( (Sq_ - Vq_t)**2))/n)
                 RMSEo.append(RMSE)
+                offkey.append(Grp)
+                #nRMSE
+                NRMSE=RMSE/np.mean(Vq_t)
+                nRMSEo.append(NRMSE)
+                #nBIASo
+                BIAS= np.sum(Sq_ - Vq_t)/len( Vq_t)
+                nBIAS=BIAS/np.mean(Vq_t)
+                nBIASo.append(nBIAS)
+                #rRMSE
+                rRMSEo.append(np.sqrt(NRMSE**2-nBIAS**2))
+                
             else:
                     NSEo.append(EMPTY)
                     Rsqo.append(EMPTY)
                     KGEo.append(EMPTY)
                     no.append(EMPTY)
                     RMSEo.append(EMPTY)
+                    offkey.append(EMPTY)
+                    nRMSEo.append(EMPTY)
+                    nBIASo.append(EMPTY)
+                    rRMSEo.append(EMPTY)
+                    
+       
         validout={
-            "algorithm": np.array(['geobam','hivdi','metroman','momma']),
+            "algorithm": np.array([offkey]),
             "NSE":NSEo[:],
             "Rsq":Rsqo[:],
             "KGE":KGEo[:],
             "RMSE":RMSEo[:],
+            "nRMSE":nRMSEo[:],
+            "nBIAS":nBIASo[:],
+            "rRMSE":rRMSEo[:],
             "n":no[:],
             "t":St_       
             }
@@ -138,21 +162,37 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 n=len(Vq_t)
                 no.append(n)
                 #RMSE
-                RMSE=np.sqrt((np.sum( Sq_ - Vq_t)**2)/n)
+                RMSE=np.sqrt((np.sum( (Sq_ - Vq_t)**2))/n)
                 RMSEo.append(RMSE)
+                offkey.append(Grp)
+                #nRMSE
+                NRMSE=RMSE/np.mean(Vq_t)
+                nRMSEo.append(NRMSE)
+                #nBIASo
+                BIAS= np.sum(Sq_ - Vq_t)/len( Vq_t)
+                nBIAS=BIAS/np.mean(Vq_t)
+                nBIASo.append(nBIAS)
+                #rRMSE
+                rRMSEo.append(np.sqrt(NRMSE**2-nBIAS**2))
             else:
                     NSEo.append(EMPTY)
                     Rsqo.append(EMPTY)
                     KGEo.append(EMPTY)
                     no.append(EMPTY)
                     RMSEo.append(EMPTY)
+                    offkey.append(EMPTY)
+                    nRMSEo.append(EMPTY)
+                    nBIASo.append(EMPTY)
+                    rRMSEo.append(EMPTY)
         validout={
-            "algorithm": np.array(['geobam_q_c','hivdi_q_c','metroman_q_c','momma_q_c','sad_q_c',
-                          'geobam_q_uc','hivdi_q_uc','metroman_q_uc','momma_q_uc','sad_q_uc']),
+            "algorithm": np.array([offkey]),
             "NSE":NSEo[:],
             "Rsq":Rsqo[:],
             "KGE":KGEo[:],
             "RMSE":RMSEo[:],
+            "nRMSE":nRMSEo[:],
+            "nBIAS":nBIASo[:],
+            "rRMSE":rRMSEo[:],
             "n":no[:],
             "t":St_     
             }
