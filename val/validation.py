@@ -74,7 +74,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 n=len(Vq_t)
                 no.append(n)
                 #RMSE
-                RMSE=np.sqrt((np.sum( Sq_ - Vq_t)**2)/n)
+                RMSE=np.sqrt((np.sum( (Sq_ - Vq_t)**2))/n)
                 RMSEo.append(RMSE)
                 offkey.append(Grp)
                 #nRMSE
@@ -162,7 +162,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 n=len(Vq_t)
                 no.append(n)
                 #RMSE
-                RMSE=np.sqrt((np.sum( Sq_ - Vq_t)**2)/n)
+                RMSE=np.sqrt((np.sum( (Sq_ - Vq_t)**2))/n)
                 RMSEo.append(RMSE)
                 offkey.append(Grp)
                 #nRMSE
