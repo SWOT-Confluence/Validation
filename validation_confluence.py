@@ -294,6 +294,9 @@ class ValidationConfluence:
             "KGE": np.full((self.NUM_ALGOS), fill_value=-9999),
             "RMSE": np.full((self.NUM_ALGOS), fill_value=-9999),
             "n": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "nRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "nBIAS":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "rRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),
         }
         no_offline = False
         # Check if there is data to validate
