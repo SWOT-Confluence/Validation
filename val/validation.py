@@ -43,7 +43,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
         for Grp in Sq:    
             Sq_=Sq[Grp]       
             Sq_=Sq_[ids]           
-             
+            offkey.append(Grp) 
             ## strictly for testing I am converting -999999999999 to an array of posative value
             #Sq_=np.random.uniform(low=0.0, high=300.0,size=len(Sq_))
                 
@@ -75,8 +75,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 no.append(n)
                 #RMSE
                 RMSE=np.sqrt((np.sum( (Sq_ - Vq_t)**2))/n)
-                RMSEo.append(RMSE)
-                offkey.append(Grp)
+                RMSEo.append(RMSE)                
                 #nRMSE
                 NRMSE=RMSE/np.mean(Vq_t)
                 nRMSEo.append(NRMSE)
@@ -118,6 +117,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
             Sq_=Sq_[ids]           
             St__= St[ids]
             alg=Grp
+            offkey.append(Grp)
             if any(Sq_>EMPTY) and any(Vq_>EMPTY):
                  #SWOT empty removal
                 St_=St__[Sq_>0]
@@ -163,8 +163,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 no.append(n)
                 #RMSE
                 RMSE=np.sqrt((np.sum( (Sq_ - Vq_t)**2))/n)
-                RMSEo.append(RMSE)
-                offkey.append(Grp)
+                RMSEo.append(RMSE)                
                 #nRMSE
                 NRMSE=RMSE/np.mean(Vq_t)
                 nRMSEo.append(NRMSE)
