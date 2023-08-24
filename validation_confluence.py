@@ -202,12 +202,13 @@ class ValidationConfluence:
             "momma_q_c":"dschg_go",
             "sads_q_c":"dschg_gs",
             "consensus_q_c":"dschg_gc",
+            "sic4dvar_q_c":"dschg_gi",
             "metro_q_uc":"dschg_m",
             "bam_q_uc":"dschg_b",
             "hivdi_q_uc":"dschg_h",
             "momma_q_uc":"dschg_o",
             "sads_q_uc":"dschg_s",
-            # "sic4dvar_q_uc":"dschg_i",
+            "sic4dvar_q_uc":"dschg_i",
             "consensus_q_uc":"dschg_c",
             "d_x_area":"d_x_area",
             "d_x_area_u":"d_x_area_u",
@@ -221,6 +222,8 @@ class ValidationConfluence:
         offline_data[convention_dict["metro_q_c"]] = off[convention_dict["metro_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["momma_q_c"]] = off[convention_dict["momma_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["sads_q_c"]] = off[convention_dict["sads_q_c"]][:].filled(np.nan)
+        offline_data[convention_dict["sic4dvar_q_c"]] = off[convention_dict["sic4dvar_q_c"]][:].filled(np.nan)
+        offline_data[convention_dict["sic4dvar_q_uc"]] = off[convention_dict["sic4dvar_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["bam_q_uc"]] = off[convention_dict["bam_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["hivdi_q_uc"]] = off[convention_dict["hivdi_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["metro_q_uc"]] = off[convention_dict["metro_q_uc"]][:].filled(np.nan)
