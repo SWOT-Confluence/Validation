@@ -43,7 +43,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
         for Grp in Sq:    
             Sq_=Sq[Grp]       
             Sq_=Sq_[ids]           
-            offkey.append(Grp) 
+            offkey.append(Grp)
             ## strictly for testing I am converting -999999999999 to an array of posative value
             #Sq_=np.random.uniform(low=0.0, high=300.0,size=len(Sq_))
                 
@@ -92,7 +92,6 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                     KGEo.append(EMPTY)
                     no.append(EMPTY)
                     RMSEo.append(EMPTY)
-                    offkey.append(EMPTY)
                     nRMSEo.append(EMPTY)
                     nBIASo.append(EMPTY)
                     rRMSEo.append(EMPTY)
@@ -179,7 +178,6 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                     KGEo.append(EMPTY)
                     no.append(EMPTY)
                     RMSEo.append(EMPTY)
-                    offkey.append(EMPTY)
                     nRMSEo.append(EMPTY)
                     nBIASo.append(EMPTY)
                     rRMSEo.append(EMPTY)

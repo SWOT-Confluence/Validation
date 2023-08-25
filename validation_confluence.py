@@ -122,16 +122,18 @@ class ValidationConfluence:
         # could be optimized using the global gage_agency varaible
         groups = list(sos.groups.keys())
         gage_data = {}
-        if "usgs" in groups:
-            gage_data = self.get_gage_q(sos, "usgs")
+        print('finding groups')
+        if "USGS" in groups:
+            print('in usgs')
+            gage_data = self.get_gage_q(sos, "USGS")
+            if gage_data == {}:
+                gage_data = self.get_gage_q(sos, "WSC")
         elif "grdc" in groups:
             gage_data = self.get_gage_q(sos, "grdc")
         elif "Hidroweb" in groups:
             gage_data = self.get_gage_q(sos, "Hidroweb")
         elif "ABOM" in groups:
             gage_data = self.get_gage_q(sos, "ABOM")
-        elif "WSC" in groups:
-            gage_data = self.get_gage_q(sos, "WSC")
         elif "MLIT" in groups:
             gage_data = self.get_gage_q(sos, "MLIT")
         elif "DEFRA" in groups:
