@@ -178,7 +178,7 @@ class ValidationConfluence:
                     return gage_data
             gage_data["type"] = gage_type
             gage_data["q"] = gage[f"{gage_type}_q"][index][:].filled(np.nan)
-            if gage_type == "usgs":
+            if gage_type == "USGS":
                 gage_data["qt"] = gage[f"{gage_type}_qt"][index][:].filled(self.INT_FILL).astype(int)
             else:
                 qt = gage[f"{gage_type}_qt"][index][:].astype(int) + 366    # Vt in matlab tatetime +366 converts to Python ordinal
