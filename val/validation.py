@@ -134,8 +134,8 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 fig = plt.figure()                
                 ax = fig.add_subplot()
                 dates = Pdate.date2num(strDates)
-                ax.plot_date(dates, Vq_t, fmt='-')
-                ax.plot_date(dates, Sq_, fmt='-')               
+                ax.plot_date(dates, Vq_t, fmt='-',marker='o')
+                ax.plot_date(dates, Sq_, fmt='-',marker='o')               
                
                 ax.set_ylabel('Q (m^3/s)')
                 ax.legend(['Gage',alg])
