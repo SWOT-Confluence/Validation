@@ -187,7 +187,7 @@ class ValidationConfluence:
              else:
                  #othewise closest mean
                  index=np.array(index[np.argmin(np.abs(np.array(glt)-model_q))])
-                 if np.size(index):
+                 if np.size(index)>1:
                      warnings.warn('identical mean q values')
                      index=index[0]
                  
