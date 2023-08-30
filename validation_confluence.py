@@ -180,10 +180,16 @@ class ValidationConfluence:
              if np.isnan(model_q):
                  #when model is nan, choose lingest timeseries
                  index=np.array(index[np.argmax(np.array(glt))])
+                 if np.size(index)>1:
+                     warnings.warn('model was nan and times are same length')
+                     index=index[0]
                  
              else:
                  #othewise closest mean
                  index=np.array(index[np.argmin(np.abs(np.array(glt)-model_q))])
+                 if np.size(index):
+                     warnings.warn('identical mean q values')
+                     index=index[0]
                  
         
 
