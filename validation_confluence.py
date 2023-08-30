@@ -179,11 +179,11 @@ class ValidationConfluence:
                  
              if np.isnan(model_q):
                  #when model is nan, choose lingest timeseries
-                 index=index[np.argmax(np.array(glt))]
+                 index=np.array(index[np.argmax(np.array(glt))])
                  
              else:
                  #othewise closest mean
-                 index=index[np.argmin(np.abs(np.array(glt)-model_q))]
+                 index=np.array(index[np.argmin(np.abs(np.array(glt)-model_q))])
                  
         
 
@@ -191,7 +191,7 @@ class ValidationConfluence:
             
 
         gage_data = {}
-        if len(index[0]) != 0:
+        if np.size(index[0]) != 0:
             if self.run_type == "constrained":
                 # if constraind check and see if the gage selected at this index is a 0
                 if gage["CAL"][:][index] == 1:
