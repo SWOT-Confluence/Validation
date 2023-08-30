@@ -173,8 +173,8 @@ class ValidationConfluence:
              glt=[]
              for Gindex in index:
                  #pull mean q and timeseries lenghts
-                 gmq.append(gage[f"{gage_type}_mean_q"][index][:].filled(np.nan))
-                 t = gage[f"{gage_type}_qt"][index][:].filled(self.INT_FILL).astype(int)
+                 gmq.append(gage[f"{gage_type}_mean_q"][Gindex][:].filled(np.nan))
+                 t = gage[f"{gage_type}_qt"][Gindex][:].filled(self.INT_FILL).astype(int)
                  glt.append(len(t[t>0]))
                  
              if np.isnan(model_q):
