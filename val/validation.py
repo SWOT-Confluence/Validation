@@ -46,7 +46,6 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
             offkey.append(Grp)
             ## strictly for testing I am converting -999999999999 to an array of posative value
             #Sq_=np.random.uniform(low=0.0, high=300.0,size=len(Sq_))
-                
             if any(Sq_>EMPTY) and any(Vq_>EMPTY):
                  #SWOT empty removal
                 St_=St[Sq_>0]
@@ -94,8 +93,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                     RMSEo.append(EMPTY)
                     nRMSEo.append(EMPTY)
                     nBIASo.append(EMPTY)
-                    rRMSEo.append(EMPTY)
-                    
+                    rRMSEo.append(EMPTY)                    
        
         validout={
             "algorithm": np.array([offkey]),
@@ -107,12 +105,12 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
             "nBIAS":nBIASo[:],
             "rRMSE":rRMSEo[:],
             "n":no[:],
-            "t":St_       
+            "t":St
             }
     else:
         
         for Grp in Sq:
-            Sq_=Sq[Grp]     
+            Sq_=Sq[Grp]
             Sq_=Sq_[ids]           
             St__= St[ids]
             alg=Grp
@@ -180,7 +178,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                     RMSEo.append(EMPTY)
                     nRMSEo.append(EMPTY)
                     nBIASo.append(EMPTY)
-                    rRMSEo.append(EMPTY)
+                    rRMSEo.append(EMPTY) 
         validout={
             "algorithm": np.array([offkey]),
             "NSE":NSEo[:],
@@ -191,7 +189,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
             "nBIAS":nBIASo[:],
             "rRMSE":rRMSEo[:],
             "n":no[:],
-            "t":St_     
+            "t":St
             }
    
     return  validout
