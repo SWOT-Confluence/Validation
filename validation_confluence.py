@@ -163,7 +163,28 @@ class ValidationConfluence:
         
         gage = sos[gage_type]
         rids = gage[f"{gage_type}_reach_id"][:].filled(np.nan)
-        index = np.where(self.reach_id == rids) 
+        index = np.where(self.reach_id == rids)
+        if np.size(index)>1:
+             warnings.warn('multiple gages for this reach. Selecting closest meanQ to model')
+             #pull model q for this reach
+             modelindex=np.where(self.reach_id == sos['reaches']['reach_id'][:].filled(np.nan))
+             model_q=sos['model']['mean_q'][modelindex][:].filled(np.nan)
+             gmq=[]
+             glt=[]
+             for Gindex in index:
+                 #pull mean q and timeseries lenghts
+                 gmq.append(gage[f"{gage_type}_mean_q"][index][:].filled(np.nan))
+                 t = gage[f"{gage_type}_qt"][index][:].filled(self.INT_FILL).astype(int)
+                 glt.append(len(t[t>0]))
+                 
+             if np.isnan(model_q):
+                 #when model is nan, choose lingest timeseries
+                 index=index[np.argmax(np.array(glt))]
+                 
+             else:
+                 #othewise closest mean
+                 index=index[np.argmin(np.abs(np.array(glt)-model_q))]
+                 
         
 
 
@@ -178,11 +199,8 @@ class ValidationConfluence:
                     return gage_data
             gage_data["type"] = gage_type
             gage_data["q"] = gage[f"{gage_type}_q"][index][:].filled(np.nan)
-            if gage_type == "USGS":
-                gage_data["qt"] = gage[f"{gage_type}_qt"][index][:].filled(self.INT_FILL).astype(int)
-            else:
-                qt = gage[f"{gage_type}_qt"][index][:].astype(int) + 366    # Vt in matlab tatetime +366 converts to Python ordinal
-                gage_data["qt"] = qt.filled(self.INT_FILL)
+            gage_data["qt"] = gage[f"{gage_type}_qt"][index][:].filled(self.INT_FILL).astype(int)
+            
         return gage_data        
 
     def read_offline_data(self, offline_dir):
