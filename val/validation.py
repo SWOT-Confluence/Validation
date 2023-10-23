@@ -58,7 +58,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 
                 # NSE
                 top=np.sum((Vq_t-Sq_)**2)
-                bottom=np.sum(Vq_t-np.mean(Vq_t)**2)
+                bottom=np.sum((Vq_t-np.mean(Vq_t))**2)
                 NSE=1-(top/bottom)
                 NSEo.append(NSE)
                  #Rsq
@@ -144,7 +144,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
                 
                 # NSE
                 top=np.sum((Vq_t-Sq_)**2)
-                bottom=np.sum(Vq_t-np.mean(Vq_t)**2)
+                bottom=np.sum((Vq_t-np.mean(Vq_t))**2)
                 NSE=1-(top/bottom)
                 NSEo.append(NSE)
                  #Rsq
