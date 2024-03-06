@@ -44,7 +44,7 @@ resource "aws_batch_job_definition" "generate_batch_jd_validation" {
         }
       },
       {
-        "name": "flpe",
+        "name": "offline",
         "efsVolumeConfiguration": {
           "fileSystemId": "${data.aws_efs_file_system.aws_efs_offline.file_system_id}",
           "rootDirectory": "/"
