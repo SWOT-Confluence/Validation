@@ -118,28 +118,35 @@ class ValidationConfluence:
         """Read gage data from SoS file and stores in gage data dictionary."""
 
         sos = Dataset(sos_file, 'r')
-
-        # could be optimized using the global gage_agency varaible
-        groups = list(sos.groups.keys())
         gage_data = {}
-        print('finding groups')
-        if "USGS" in groups:
-            print('in usgs')
-            gage_data = self.get_gage_q(sos, "USGS")
-            if gage_data == {}:
-                gage_data = self.get_gage_q(sos, "WSC")
-        elif "grdc" in groups:
-            gage_data = self.get_gage_q(sos, "grdc")
-        elif "Hidroweb" in groups:
-            gage_data = self.get_gage_q(sos, "Hidroweb")
-        elif "ABOM" in groups:
-            gage_data = self.get_gage_q(sos, "ABOM")
-        elif "MLIT" in groups:
-            gage_data = self.get_gage_q(sos, "MLIT")
-        elif "DEFRA" in groups:
-            gage_data = self.get_gage_q(sos, "DEFRA")
-            if gage_data == {}:
-                gage_data = self.get_gage_q(sos, "EAU")
+        # could be optimized using the global gage_agency varaible
+        for gage_agency in sos.gauge_agency.split(';'):
+            gage_data = self.get_gage_q(sos, gage_agency)
+            if gage_data != {}:
+                print('found gage')
+                break
+
+        # groups = list(sos.groups.keys())
+        # gage_data = {}
+        # print('finding groups')
+        
+        # if "USGS" in groups:
+        #     print('in usgs')
+        #     gage_data = self.get_gage_q(sos, "USGS")
+        #     if gage_data == {}:
+        #         gage_data = self.get_gage_q(sos, "WSC")
+        # elif "grdc" in groups:
+        #     gage_data = self.get_gage_q(sos, "grdc")
+        # elif "Hidroweb" in groups:
+        #     gage_data = self.get_gage_q(sos, "Hidroweb")
+        # elif "ABOM" in groups:
+        #     gage_data = self.get_gage_q(sos, "ABOM")
+        # elif "MLIT" in groups:
+        #     gage_data = self.get_gage_q(sos, "MLIT")
+        # elif "DEFRA" in groups:
+        #     gage_data = self.get_gage_q(sos, "DEFRA")
+        #     if gage_data == {}:
+        #         gage_data = self.get_gage_q(sos, "EAU")
             
         sos.close()
         return gage_data
@@ -164,7 +171,9 @@ class ValidationConfluence:
         gage = sos[gage_type]
         rids = gage[f"{gage_type}_reach_id"][:].filled(np.nan)
         index = np.where(self.reach_id == rids)
-        if np.size(index)>1:
+        print('here is index we are workign with ', index)
+        # if its more than one, we take it down to a scalar
+        if len(index[0])>1:
              warnings.warn('multiple gages for this reach. Selecting closest meanQ to model')
              #pull model q for this reach
              modelindex=np.where(self.reach_id == sos['reaches']['reach_id'][:].filled(np.nan))
@@ -178,7 +187,7 @@ class ValidationConfluence:
                  glt.append(len(t[t>0]))
                  
              if np.isnan(model_q):
-                 #when model is nan, choose lingest timeseries
+                 #when model is nan, choose longest timeseries
                  index=np.array(index[np.argmax(np.array(glt))])
                  if np.size(index)>1:
                      warnings.warn('model was nan and times are same length')
@@ -190,18 +199,18 @@ class ValidationConfluence:
                  if np.size(index)>1:
                      warnings.warn('identical mean q values')
                      index=index[0]
-                 
+        elif len(index[0]) == 1:
+            index = index[0][0]
         
-
 
             
 
         gage_data = {}
-        if np.size(index[0]) != 0:
+        if np.isscalar(index):
             if self.run_type == "constrained":
                 # if constraind check and see if the gage selected at this index is a 0
                 if gage["CAL"][:][index] == 1:
-                    warnings.warn('gauge found was calibration.. This is an unconstrained run, so it will not be used for validation')
+                    warnings.warn('gauge found was calibration.. This is a constrained run, so it will not be used for validation')
                     return gage_data
             gage_data["type"] = gage_type
             gage_data["q"] = gage[f"{gage_type}_q"][index][:].filled(np.nan)
@@ -276,6 +285,7 @@ class ValidationConfluence:
         for v in offline_data.values():
             if np.count_nonzero(~np.isnan(v)) == 0: invalid += 1
         if invalid == self.NUM_ALGOS:
+            print('OFFLINE IS NOT VALID')
             return False
         else:
             return True
