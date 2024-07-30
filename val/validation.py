@@ -91,7 +91,7 @@ def stats(St,Sq,Vt,Vq,IDstr,figdir):
             "nBIAS":nBIASo[:],
             "rRMSE":rRMSEo[:],
             "n":no[:],
-            "t":St_           
+            "t":St           
             }
     else:
         
