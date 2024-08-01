@@ -41,6 +41,8 @@ import numpy as np
 
 # Constants
 INPUT = Path("/mnt/data/input")
+FLPE=Path("/mnt/data/flpe")
+MOI=Path("/mnt/data/moi")
 OFFLINE = Path("/mnt/data/offline")
 OUTPUT = Path("/mnt/data/output")
 # INPUT = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/input')
@@ -77,6 +79,14 @@ class ValidationConfluence:
         check if offline data is only comprised of NaN values
     read_offline_data(reach_id)
         reads data from offline module and stores in flpe_data dictionary
+    is_flpe_valid(flpe_data)
+        check if flpe data is only comprised of NaN values
+    read_flpe_data(reach_id)
+        reads data from flpe module and stores in flpe_data dictionary
+    is_moi_valid(moi_data)
+        check if moi data is only comprised of NaN values
+    read_moi_data(reach_id)
+        reads data from moi module and stores in flpe_data dictionary
     read_time_data()
         read time of observations from SWOT files
     validate()
@@ -88,7 +98,7 @@ class ValidationConfluence:
     INT_FILL = -999
     NUM_ALGOS = 10
 
-    def __init__(self, reach_data, offline_dir, input_dir, output_dir, run_type):
+    def __init__(self, reach_data,flpe_dir,moi_dir, offline_dir, input_dir, output_dir, run_type):
 
         """
         Parameters
@@ -111,6 +121,8 @@ class ValidationConfluence:
         print('Processing', self.reach_id)
         self.gage_data = self.read_gage_data(input_dir / "sos" / reach_data["sos"])
         self.offline_data = self.read_offline_data(offline_dir)
+        self.flpe_data = self.read_flpe_data(flpe_dir)
+        self.moi_data = self.read_moi_data(moi_dir)
         self.output_dir = output_dir
 
 
@@ -216,7 +228,151 @@ class ValidationConfluence:
             gage_data["q"] = gage[f"{gage_type}_q"][index][:].filled(np.nan)
             gage_data["qt"] = gage[f"{gage_type}_qt"][index][:].filled(self.INT_FILL).astype(int)
             
-        return gage_data        
+        return gage_data
+    
+    def read_moi_data(self,moi_dir):
+        """Reads data from moi module and returns dictionary.
+        
+        Parameters
+        ----------
+        moi_dir: Path
+            path to moi data directory
+        
+        Returns
+        -------
+        dictionary of algorithm moi results
+        """
+       
+
+        moi_file = f"{moi_dir}/{self.reach_id}_integrator.nc"
+        moi = Dataset(moi_file, 'r')
+        moi_data = {}
+        moi_data["metroman"] =  moi["metroman/q"][:].filled(np.nan)
+        moi_data["neobam"] =  moi["neobam/q"][:].filled(np.nan)
+        moi_data["hivdi"] =  moi["hivdi/q"][:].filled(np.nan)
+        moi_data["momma"] =  moi["momma/q"]][:].filled(np.nan)
+        moi_data["sad"] = moi["sad/q"][:].filled(np.nan)
+        moi_data["sic4dvar"] = moi["sic4dvar/q"][:].filled(np.nan)      
+        moi.close()      
+        
+        #create pre-offline consensus
+        ALLQ=np.full((len(moi_data.keys()), len(moi_data["metroman"])), np.nan)
+        for row in range(len(moi_data.keys())):
+            ALGv=moi_data[moi_data.keys()[row]]        
+            ALGv[ALGv<0]=np.nan
+            ALLQ[row,:]=ALGv
+
+        consensus=np.nanmedian(ALLQ,axis=0)
+        moi_data["consensus"]=consensus
+        
+        
+        if self.is_moi_valid(moi_data):
+            return moi_data
+        else: 
+            return {}
+    
+    def is_moi_valid(self, moi_data):
+        """Check if moi data is only comprised of NaN values.
+        
+        Returns
+        -------
+        False if all NaN values are present otherwise True
+        """
+        
+        invalid = 0
+        for v in moi_data.values():
+            if np.count_nonzero(~np.isnan(v)) == 0: invalid += 1
+        if invalid == self.NUM_ALGOS:
+            print('MOI IS NOT VALID')
+            return False
+        else:
+            return True
+        
+    def read_flpe_data(self,flpe_dir):
+        """Reads data from flpe module and returns dictionary.
+        
+        Parameters
+        ----------
+        flpe_dir: Path
+            path to flpe data directory
+        
+        Returns
+        -------
+        dictionary of algorithm moi results
+        """
+        convention_dict = {
+            "metroman":"allq",
+            "neobam":"q",
+            "hivdi":"reach/Q",
+            "momma":"Q",
+            "sad":"Qa",  
+            "sic4dvar":"Q_da",        
+            
+            
+        }
+
+        flpe_file_metroman = f"{flpe_dir}/{'metroman'}/{self.reach_id}_metroman.nc"
+        flpe_file_neobam = f"{flpe_dir}/{'geobam'}/{self.reach_id}_geobam.nc"
+        flpe_file_hivdi = f"{flpe_dir}/{'metroman'}/{self.reach_id}_hivdi.nc"
+        flpe_file_momma = f"{flpe_dir}/{'metroman'}/{self.reach_id}_momma.nc"
+        flpe_file_sad = f"{flpe_dir}/{'metroman'}/{self.reach_id}_sad.nc"
+        flpe_file_sic4dvar = f"{flpe_dir}/{'metroman'}/{self.reach_id}_sic4dvar.nc"
+
+        flpe_mm = Dataset(flpe_file_metroman, 'r')
+        flpe_nb = Dataset(flpe_file_neobam, 'r')
+        flpe_hi = Dataset(flpe_file_hivdi, 'r')
+        flpe_mo = Dataset(flpe_file_momma, 'r')
+        flpe_sa = Dataset(flpe_file_sad, 'r')
+        flpe_si = Dataset(flpe_file_sic4dvar, 'r')
+
+        flpe_data = {}
+        flpe_data["metroman"] =  flpe_mm[convention_dict["metroman"]][:].filled(np.nan)
+        flpe_data["neobam"] =  flpe_nb[convention_dict["neobam"]][:].filled(np.nan)
+        flpe_data["hivdi"] =  flpe_hi[convention_dict["hivdi"]][:].filled(np.nan)
+        flpe_data["momma"] =  flpe_mo[convention_dict["momma"]][:].filled(np.nan)
+        flpe_data["sad"] = flpe_sa[convention_dict["sads"]][:].filled(np.nan)
+        flpe_data["sic4dvar"] = flpe_si[convention_dict["sic4dvar"]][:].filled(np.nan)    
+
+        flpe_mm.close()
+        flpe_nb.close()
+        flpe_hi.close()
+        flpe_mo.close()
+        flpe_sa.close()
+        flpe_si.close()
+
+
+        #create pre-offline consensus
+        ALLQ=np.full((len(flpe_data.keys()), len(flpe_data["metroman"])), np.nan)
+        for row in range(len(flpe_data.keys())):
+            ALGv=flpe_data[flpe_data.keys()[row]]        
+            ALGv[ALGv<0]=np.nan
+            ALLQ[row,:]=ALGv
+
+        consensus=np.nanmedian(ALLQ,axis=0)
+        flpe_data["consensus"]=consensus
+        
+        
+        if self.is_flpe_valid(flpe_data):
+            return flpe_data
+        else: 
+            return {}
+    
+    def is_flpe_valid(self, flpe_data):
+        """Check if moi data is only comprised of NaN values.
+        
+        Returns
+        -------
+        False if all NaN values are present otherwise True
+        """
+        
+        invalid = 0
+        for v in flpe_data.values():
+            if np.count_nonzero(~np.isnan(v)) == 0: invalid += 1
+        if invalid == self.NUM_ALGOS:
+            print('flpe IS NOT VALID')
+            return False
+        else:
+            return True                
 
     def read_offline_data(self, offline_dir):
         """Reads data from offline module and returns dictionary.
@@ -329,14 +485,31 @@ class ValidationConfluence:
         data = {
             "algorithm": np.full((self.NUM_ALGOS), fill_value=""),
             "NSE": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "NSE_s1": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "NSE_s2": np.full((self.NUM_ALGOS), fill_value=-9999),
             "Rsq": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "Rsq_s1": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "Rsq_s2": np.full((self.NUM_ALGOS), fill_value=-9999),
             "KGE": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "KGE_s1": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "KGE_s2": np.full((self.NUM_ALGOS), fill_value=-9999),
             "RMSE": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "RMSE_s1": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "RMSE_s2": np.full((self.NUM_ALGOS), fill_value=-9999),
             "n": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "n_s1": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "n_s2": np.full((self.NUM_ALGOS), fill_value=-9999),
             "nRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "nRMSE_s1":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "nRMSE_s2":np.full((self.NUM_ALGOS), fill_value=-9999),
             "nBIAS":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "nBIAS_s1":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "nBIAS_s2":np.full((self.NUM_ALGOS), fill_value=-9999),
             "rRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "rRMSE_s1":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "rRMSE_s2":np.full((self.NUM_ALGOS), fill_value=-9999),
         }
+        
         no_offline = False
         # Check if there is data to validate
         if self.gage_data:
@@ -459,7 +632,7 @@ def run_validation():
 
     reach_data = get_reach_data(reach_json,index_to_run)
 
-    vc = ValidationConfluence(reach_data, OFFLINE, INPUT, OUTPUT, run_type)
+    vc = ValidationConfluence(reach_data,FLPE,MOI, OFFLINE, INPUT, OUTPUT, run_type)
     vc.validate()
 
 if __name__ == "__main__": 
