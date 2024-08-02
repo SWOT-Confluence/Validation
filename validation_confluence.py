@@ -96,7 +96,7 @@ class ValidationConfluence:
     """
 
     INT_FILL = -999
-    NUM_ALGOS = 10
+    NUM_ALGOS = 14
 
     def __init__(self, reach_data,flpe_dir,moi_dir, offline_dir, input_dir, output_dir, run_type):
 
@@ -107,7 +107,7 @@ class ValidationConfluence:
             dictionary of reach identifier and associated file names
         offline_dir: Path
             path to offline data directory
-        input_dir: Path
+        input_dir: Path 
             path to input directory
         output_dir: Path
             path to output directory
@@ -482,32 +482,69 @@ class ValidationConfluence:
         time = self.read_time_data()
 
         # Data fill values
-        data = {
+        data_flpe = {
             "algorithm": np.full((self.NUM_ALGOS), fill_value=""),
-            "NSE": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "NSE_s1": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "NSE_s2": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "NSE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
+            "Rsq": np.full((self.NUM_ALGOS/2), fill_value=-9999),
+            "KGE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
+            "RMSE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
+            "n": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
+            "nRMSE":np.full((self.NUM_ALGOS/2), fill_value=-9999),           
+            "nBIAS":np.full((self.NUM_ALGOS/2), fill_value=-9999),            
+            "rRMSE":np.full((self.NUM_ALGOS/2), fill_value=-9999),
+           
+        }
+
+        no_flpe = False
+        # Check if there is data to validate
+        if self.gage_data:
+            if self.flpe_data:
+                #### Check should go here for all nan gauge data ---------------------------------
+                data_flpe = stats(time, self.flpe_data, self.gage_data["qt"], 
+                            self.gage_data["q"], str(self.reach_id), 
+                            self.output_dir / "figs")
+            else:
+                warnings.warn('No flpe data found...')
+                no_flpe = True
+        else:
+            warnings.warn('No gauge found for reach...')
+
+        data_moi = {
+            "algorithm": np.full((self.NUM_ALGOS), fill_value=""),
+            "NSE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
+            "Rsq": np.full((self.NUM_ALGOS/2), fill_value=-9999),
+            "KGE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
+            "RMSE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
+            "n": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
+            "nRMSE":np.full((self.NUM_ALGOS/2), fill_value=-9999),           
+            "nBIAS":np.full((self.NUM_ALGOS/2), fill_value=-9999),            
+            "rRMSE":np.full((self.NUM_ALGOS/2), fill_value=-9999),
+        }
+
+        no_moi = False
+        # Check if there is data to validate
+        if self.gage_data:
+            if self.moi_data:
+                #### Check should go here for all nan gauge data ---------------------------------
+                data_moi = stats(time, self.moi_data, self.gage_data["qt"], 
+                            self.gage_data["q"], str(self.reach_id), 
+                            self.output_dir / "figs")
+            else:
+                warnings.warn('No moi data found...')
+                no_moi = True
+        else:
+            warnings.warn('No gauge found for reach...')
+
+        data_O = {
+            "algorithm": np.full((self.NUM_ALGOS), fill_value=""),
+            "NSE": np.full((self.NUM_ALGOS), fill_value=-9999),           
             "Rsq": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "Rsq_s1": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "Rsq_s2": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "KGE": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "KGE_s1": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "KGE_s2": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "RMSE": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "RMSE_s1": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "RMSE_s2": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "n": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "n_s1": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "n_s2": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "nRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),
-            "nRMSE_s1":np.full((self.NUM_ALGOS), fill_value=-9999),
-            "nRMSE_s2":np.full((self.NUM_ALGOS), fill_value=-9999),
-            "nBIAS":np.full((self.NUM_ALGOS), fill_value=-9999),
-            "nBIAS_s1":np.full((self.NUM_ALGOS), fill_value=-9999),
-            "nBIAS_s2":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "KGE": np.full((self.NUM_ALGOS), fill_value=-9999),           
+            "RMSE": np.full((self.NUM_ALGOS), fill_value=-9999),           
+            "n": np.full((self.NUM_ALGOS), fill_value=-9999),           
+            "nRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),           
+            "nBIAS":np.full((self.NUM_ALGOS), fill_value=-9999),            
             "rRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),
-            "rRMSE_s1":np.full((self.NUM_ALGOS), fill_value=-9999),
-            "rRMSE_s2":np.full((self.NUM_ALGOS), fill_value=-9999),
         }
         
         no_offline = False
@@ -515,7 +552,7 @@ class ValidationConfluence:
         if self.gage_data:
             if self.offline_data:
                 #### Check should go here for all nan gauge data ---------------------------------
-                data = stats(time, self.offline_data, self.gage_data["qt"], 
+                data_O = stats(time, self.offline_data, self.gage_data["qt"], 
                             self.gage_data["q"], str(self.reach_id), 
                             self.output_dir / "figs")
             else:
@@ -528,15 +565,19 @@ class ValidationConfluence:
         gage_type = "No data" if not self.gage_data else self.gage_data["type"]
 
         if (gage_type != "No data") and (no_offline != True):
-            self.write(data, self.reach_id, gage_type)
+            self.write(data_flpe,data_moi,data_O, self.reach_id, gage_type)
 
-    def write(self, stats, reach_id, gage_type):
+    def write(self, stats_flpe,stats_moi,stats_O, reach_id, gage_type):
         """Write stats to NetCDF file.
         
         Parameters
         ----------
-        stats: dict
-            dictionary of stats for each algorithm
+        stats_flpe: dict
+            dictionary of flpe stats for each algorithm
+        stats_moi: dict
+            dictionary of moi stats for each algorithm
+        stats_O: dict
+            dictionary of offline stats for each algorithm
         reach_id: int
             reach identifier for stats
         gage_type: str
