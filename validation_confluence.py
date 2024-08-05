@@ -31,6 +31,8 @@ import os
 from pathlib import Path
 import sys
 import warnings
+import matplotlib.pyplot as plt
+import seaborn as sb
 
 # Local imports
 from val.validation import stats
@@ -227,6 +229,7 @@ class ValidationConfluence:
             gage_data["type"] = gage_type
             gage_data["q"] = gage[f"{gage_type}_q"][index][:].filled(np.nan)
             gage_data["qt"] = gage[f"{gage_type}_qt"][index][:].filled(self.INT_FILL).astype(int)
+            gage_data["gid"] = stringtochar(gage[f"{gage_type}_id"][index][:].filled(np.nan))
             
         return gage_data
     
@@ -477,13 +480,16 @@ class ValidationConfluence:
 
     def validate(self):
         """Run validation operations on gage data and FLPE data; write stats."""
-        
+     
         # SWOT time 
         time = self.read_time_data()
 
         # Data fill values
         data_flpe = {
-            "algorithm": np.full((self.NUM_ALGOS), fill_value=""),
+            "algorithm": np.full((self.NUM_ALGOS/2), fill_value=""),
+            "Gid": np.full((self.NUM_ALGOS/2), fill_value=""),
+            "Spearmanr": np.full((self.NUM_ALGOS/2), fill_value=-9999),
+            "SIGe": np.full((self.NUM_ALGOS/2), fill_value=-9999),
             "NSE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
             "Rsq": np.full((self.NUM_ALGOS/2), fill_value=-9999),
             "KGE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
@@ -491,7 +497,7 @@ class ValidationConfluence:
             "n": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
             "nRMSE":np.full((self.NUM_ALGOS/2), fill_value=-9999),           
             "nBIAS":np.full((self.NUM_ALGOS/2), fill_value=-9999),            
-            "rRMSE":np.full((self.NUM_ALGOS/2), fill_value=-9999),
+            
            
         }
 
@@ -509,16 +515,20 @@ class ValidationConfluence:
         else:
             warnings.warn('No gauge found for reach...')
 
+        
+       
         data_moi = {
-            "algorithm": np.full((self.NUM_ALGOS), fill_value=""),
+            "algorithm": np.full((self.NUM_ALGOS/2), fill_value=""),
+            "Gid": np.full((self.NUM_ALGOS/2), fill_value=""),
+            "Spearmanr": np.full((self.NUM_ALGOS/2), fill_value=-9999),
+            "SIGe": np.full((self.NUM_ALGOS/2), fill_value=-9999),
             "NSE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
             "Rsq": np.full((self.NUM_ALGOS/2), fill_value=-9999),
             "KGE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
             "RMSE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
             "n": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
             "nRMSE":np.full((self.NUM_ALGOS/2), fill_value=-9999),           
-            "nBIAS":np.full((self.NUM_ALGOS/2), fill_value=-9999),            
-            "rRMSE":np.full((self.NUM_ALGOS/2), fill_value=-9999),
+            "nBIAS":np.full((self.NUM_ALGOS/2), fill_value=-9999),  
         }
 
         no_moi = False
@@ -535,16 +545,21 @@ class ValidationConfluence:
         else:
             warnings.warn('No gauge found for reach...')
 
+        
+
         data_O = {
             "algorithm": np.full((self.NUM_ALGOS), fill_value=""),
+            "Gid": np.full((self.NUM_ALGOS), fill_value=""),
+            "Spearmanr": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "SIGe": np.full((self.NUM_ALGOS), fill_value=-9999),
             "NSE": np.full((self.NUM_ALGOS), fill_value=-9999),           
             "Rsq": np.full((self.NUM_ALGOS), fill_value=-9999),
             "KGE": np.full((self.NUM_ALGOS), fill_value=-9999),           
             "RMSE": np.full((self.NUM_ALGOS), fill_value=-9999),           
             "n": np.full((self.NUM_ALGOS), fill_value=-9999),           
             "nRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),           
-            "nBIAS":np.full((self.NUM_ALGOS), fill_value=-9999),            
-            "rRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "nBIAS":np.full((self.NUM_ALGOS), fill_value=-9999),           
+            
         }
         
         no_offline = False
@@ -553,7 +568,7 @@ class ValidationConfluence:
             if self.offline_data:
                 #### Check should go here for all nan gauge data ---------------------------------
                 data_O = stats(time, self.offline_data, self.gage_data["qt"], 
-                            self.gage_data["q"], str(self.reach_id), 
+                            self.gage_data["q"],  self.gage_data["gid"], str(self.reach_id), 
                             self.output_dir / "figs")
             else:
                 warnings.warn('No offline data found...')
@@ -591,46 +606,120 @@ class ValidationConfluence:
         out.reach_id = reach_id
         out.description = f"Statistics for reach: {reach_id}"
         out.history = datetime.datetime.now().strftime('%d-%b-%Y %H:%M:%S')
-        out.has_validation = 0 if np.where(stats["algorithm"] == "")[0].size == self.NUM_ALGOS else 1
+        out.has_validation_flpe = 0 if np.where(stats_flpe["algorithm"] == "")[0].size == self.NUM_ALGOS/2 else 1
+        out.has_validation_moi = 0 if np.where(stats_moi["algorithm"] == "")[0].size == self.NUM_ALGOS/2 else 1
+        out.has_validation_o = 0 if np.where(stats_o["algorithm"] == "")[0].size == self.NUM_ALGOS else 1
         out.gage_type = gage_type.upper()
 
-        a_dim = out.createDimension("num_algos", None)
-        c_dim = out.createDimension("nchar", None)
-        t_dim = out.createDimension("time", len(stats["t"]))
-        t_v = out.createVariable("time", "i4", ("time",))
-        t_v.units = "days since Jan 1 Year 1"
-        t_v[:] = stats["t"]
+        #flpe dimenstion
+        a_dim_flpe = out.createDimension("num_algos_flpe", None)
+        c_dim_flpe = out.createDimension("nchar_flpe", None)
+        t_dim_flpe = out.createDimension("time_flpe", len(stats_flpe["t"]))
+        t_v_flpe = out.createVariable("time_flpe", "i4", ("time_flpe",))
+        t_v_flpe.units = "days since Jan 1 Year 1"
+        t_v_flpe[:] = stats_flpe["t"]
+        #moi dimenstion
+        a_dim_moi = out.createDimension("num_algos_moi", None)
+        c_dim_moi = out.createDimension("nchar_moi", None)
+        t_dim_moi = out.createDimension("time_moi", len(stats_moi["t"]))
+        t_v_moi = out.createVariable("time_moi", "i4", ("time_moi",))
+        t_v_moi.units = "days since Jan 1 Year 1"
+        t_v_moi[:] = stats_flpe["t"]
 
-        a_v = out.createVariable("algorithm", 'S1', ("num_algos", "nchar"),)
-        a_v[:] = stringtochar(stats["algorithm"][0].astype("S16"))
+        #offline dimenstion
+        a_dim_o = out.createDimension("num_algos_o", None)
+        c_dim_o = out.createDimension("nchar_o", None)
+        t_dim_o = out.createDimension("time_o", len(stats_O["t"]))
+        t_v_o = out.createVariable("time_o", "i4", ("time_o",))
+        t_v_o.units = "days since Jan 1 Year 1"
+        t_v_o[:] = stats_o["t"]
+
+        a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos_flpe", "nchar_flpe"),)
+        a_v_flpe[:] = stringtochar(stats_flpe["algorithm"][0].astype("S16"))
+        a_v_moi = out.createVariable("algorithm_moi", 'S1', ("num_algos_moi", "nchar_moi"),)
+        a_v_moi[:] = stringtochar(stats_moi["algorithm"][0].astype("S16"))
+        a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_o", "nchar_o"),)
+        a_v_o[:] = stringtochar(stats_O["algorithm"][0].astype("S16"))
+        #
+        gid_v_flpe = out.createVariable("gageID_flpe", "f8", ("num_algos_flpe", "nchar_flpe"), fill_value=fill)
+        gid_v_flpe[:] = stringtochar(stats_flpe["Gid"][0].astype("S16"))
+        gid_v_moi = out.createVariable("gageID_moi", "f8", ("num_algos_moi", "nchar_moi"), fill_value=fill)
+        gid_v_moi[:] = stringtochar(stats_moi["Gid"][0].astype("S16"))
+        gid_v_o = out.createVariable("gageID_0", "f8", ("num_algos_o", "nchar_o"), fill_value=fill)
+        gid_v_o[:] = stringtochar(stats_O["Gid"][0].astype("S16"))
+        #
+        r_v_flpe = out.createVariable("Spearmanr_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+        r_v_flpe[:] = np.where(np.isclose(stats_flpe["Spearmanr"], empty), fill, stats_flpe["Spearmanr"])
+        r_v_moi = out.createVariable("Spearmanr_moi", "f8", ("num_algos_moi",), fill_value=fill)
+        r_v_moi[:] = np.where(np.isclose(stats_moi["Spearmanr"], empty), fill, stats_moi["Spearmanr"])
+        r_v_o = out.createVariable("Spearmanr_0", "f8", ("num_algos_o",), fill_value=fill)
+        r_v_o[:] = np.where(np.isclose(stats_O["Spearmanr"], empty), fill, stats_O["Spearmanr"])
+        #
+        sige_v_flpe = out.createVariable("SIGe_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+        sige_v_flpe[:] = np.where(np.isclose(stats_flpe["SIGe"], empty), fill, stats_flpe["SIGe"])
+        sige_v_moi = out.createVariable("SIGe_moi", "f8", ("num_algos_moi",), fill_value=fill)
+        sige_v_moi[:] = np.where(np.isclose(stats_moi["SIGe"], empty), fill, stats_moi["SIGe"])
+        sige_v_o = out.createVariable("SIGe_0", "f8", ("num_algos_o",), fill_value=fill)
+        sige_v_o[:] = np.where(np.isclose(stats_O["SIGe"], empty), fill, stats_O["SIGe"])
+        #
+        nse_v_flpe = out.createVariable("NSE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+        nse_v_flpe[:] = np.where(np.isclose(stats_flpe["NSE"], empty), fill, stats_flpe["NSE"])
+        nse_v_moi = out.createVariable("NSE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+        nse_v_moi[:] = np.where(np.isclose(stats_moi["NSE"], empty), fill, stats_moi["NSE"])
+        nse_v_o = out.createVariable("NSE_0", "f8", ("num_algos_o",), fill_value=fill)
+        nse_v_o[:] = np.where(np.isclose(stats_O["NSE"], empty), fill, stats_O["NSE"])
+        #
+        rsq_v_flpe = out.createVariable("Rsq_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+        rsq_v_flpe[:] = np.where(np.isclose(stats_flpe["Rsq"], empty), fill, stats_flpe["Rsq"])
+        rsq_v_moi = out.createVariable("Rsq_moi", "f8", ("num_algos_moi",), fill_value=fill)
+        rsq_v_moi[:] = np.where(np.isclose(stats_moi["Rsq"], empty), fill, stats_moi["Rsq"])
+        rsq_v_o = out.createVariable("Rsq_o", "f8", ("num_algos_o",), fill_value=fill)
+        rsq_v_o[:] = np.where(np.isclose(stats_O["Rsq"], empty), fill, stats_O["Rsq"])
+        #
+        kge_v_flpe = out.createVariable("KGE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+        kge_v_flpe[:] = np.where(np.isclose(stats_flpe["KGE"], empty), fill, stats_flpe["KGE"])
+        kge_v_moi = out.createVariable("KGE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+        kge_v_moi[:] = np.where(np.isclose(stats_moi["KGE"], empty), fill, stats_moi["KGE"])
+        kge_v_o = out.createVariable("KGE_o", "f8", ("num_algos_o",), fill_value=fill)
+        kge_v_o[:] = np.where(np.isclose(stats_O["KGE"], empty), fill, stats_O["KGE"])
+        #
+        rmse_v_flpe = out.createVariable("RMSE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+        rmse_v_flpe.units = "m^3/s"
+        rmse_v_flpe[:] = np.where(np.isclose(stats_flpe["RMSE"], empty), fill, stats_flpe["RMSE"])
+        rmse_v_moi = out.createVariable("RMSE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+        rmse_v_moi.units = "m^3/s"
+        rmse_v_moi[:] = np.where(np.isclose(stats_moi["RMSE"], empty), fill, stats_moi["RMSE"])
+        rmse_v_o = out.createVariable("RMSE_o", "f8", ("num_algos_o",), fill_value=fill)
+        rmse_v_o.units = "m^3/s"
+        rmse_v_o[:] = np.where(np.isclose(stats_O["RMSE"], empty), fill, stats_O["RMSE"])
+        #
+        n_v_flpe = out.createVariable("testn_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+        n_v_flpe[:] = np.where(np.isclose(stats_flpe["n"], empty), fill, stats_flpe["n"])
+        n_v_moi = out.createVariable("testn_moi", "f8", ("num_algos_moi",), fill_value=fill)
+        n_v_moi[:] = np.where(np.isclose(stats_moi["n"], empty), fill, stats_moi["n"])
+        n_v_o = out.createVariable("testn_o", "f8", ("num_algos_o",), fill_value=fill)
+        n_v_o[:] = np.where(np.isclose(stats_O["n"], empty), fill, stats_O["n"])
+        #
+        nrmse_v_flpe = out.createVariable("nRMSE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+        nrmse_v_flpe.units = "none"
+        nrmse_v_flpe[:] = np.where(np.isclose(stats_flpe["nRMSE"], empty), fill, stats_flpe["nRMSE"])
+        nrmse_v_moi = out.createVariable("nRMSE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+        nrmse_v_moi.units = "none"
+        nrmse_v_moi[:] = np.where(np.isclose(stats_moi["nRMSE"], empty), fill, stats_moi["nRMSE"])
+        nrmse_v_o = out.createVariable("nRMSE_o", "f8", ("num_algos_o",), fill_value=fill)
+        nrmse_v_o.units = "none"
+        nrmse_v_o[:] = np.where(np.isclose(stats_O["nRMSE"], empty), fill, stats_O["nRMSE"])
+        #
+        nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+        nb_v_flpe.units = "none"
+        nb_v_flpe[:] = np.where(np.isclose(stats_flpe["nBIAS"], empty), fill, stats_flpe["nBIAS"])
+        nb_v_moi = out.createVariable("nBIAS_moi", "f8", ("num_algos_moi",), fill_value=fill)
+        nb_v_moi.units = "none"
+        nb_v_moi[:] = np.where(np.isclose(stats_moi["nBIAS"], empty), fill, stats_moi["nBIAS"]) 
+        nb_v_o = out.createVariable("nBIAS_o", "f8", ("num_algos_o",), fill_value=fill)
+        nb_v_o.units = "none"
+        nb_v_o[:] = np.where(np.isclose(stats_O["nBIAS"], empty), fill, stats_O["nBIAS"])       
         
-        nse_v = out.createVariable("NSE", "f8", ("num_algos",), fill_value=fill)
-        nse_v[:] = np.where(np.isclose(stats["NSE"], empty), fill, stats["NSE"])
-
-        rsq_v = out.createVariable("Rsq", "f8", ("num_algos",), fill_value=fill)
-        rsq_v[:] = np.where(np.isclose(stats["Rsq"], empty), fill, stats["Rsq"])
-
-        kge_v = out.createVariable("KGE", "f8", ("num_algos",), fill_value=fill)
-        kge_v[:] = np.where(np.isclose(stats["KGE"], empty), fill, stats["KGE"])
-
-        rmse_v = out.createVariable("RMSE", "f8", ("num_algos",), fill_value=fill)
-        rmse_v.units = "m^3/s"
-        rmse_v[:] = np.where(np.isclose(stats["RMSE"], empty), fill, stats["RMSE"])
-        
-        nrmse_v = out.createVariable("nRMSE", "f8", ("num_algos",), fill_value=fill)
-        nrmse_v.units = "none"
-        nrmse_v[:] = np.where(np.isclose(stats["nRMSE"], empty), fill, stats["nRMSE"])
-        
-        nb_v = out.createVariable("nBIAS", "f8", ("num_algos",), fill_value=fill)
-        nb_v.units = "none"
-        nb_v[:] = np.where(np.isclose(stats["nBIAS"], empty), fill, stats["nBIAS"])
-        
-        rrmse_v = out.createVariable("rRMSE", "f8", ("num_algos",), fill_value=fill)
-        rrmse_v.units = "none"
-        rrmse_v[:] = np.where(np.isclose(stats["rRMSE"], empty), fill, stats["rRMSE"])
-
-        n_v = out.createVariable("testn", "f8", ("num_algos",), fill_value=fill)
-        n_v[:] = np.where(np.isclose(stats["n"], empty), fill, stats["n"])
 
         out.close()
 
