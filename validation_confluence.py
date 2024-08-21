@@ -25,6 +25,7 @@ run_validation()
 """
 
 # Standard imports
+import argparse
 import datetime
 import json
 import os
@@ -34,6 +35,7 @@ import warnings
 
 # Local imports
 from val.validation import stats
+from sos_read.sos_read import download_sos
 
 # Third-party imports
 from netCDF4 import Dataset, stringtochar
@@ -43,6 +45,7 @@ import numpy as np
 INPUT = Path("/mnt/data/input")
 OFFLINE = Path("/mnt/data/offline")
 OUTPUT = Path("/mnt/data/output")
+TMP_DIR = Path("/tmp")
 # INPUT = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/input')
 # OFFLINE = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/offline')
 # OUTPUT = Path('/Users/mtd/Analysis/SWOT/Discharge/Confluence/verify/validation/output')
@@ -88,7 +91,7 @@ class ValidationConfluence:
     INT_FILL = -999
     NUM_ALGOS = 10
 
-    def __init__(self, reach_data, offline_dir, input_dir, output_dir, run_type):
+    def __init__(self, reach_data, offline_dir, input_dir, output_dir, run_type, gage_dir):
 
         """
         Parameters
@@ -103,13 +106,15 @@ class ValidationConfluence:
             path to output directory
         run_type: str
             string indicating if we are doing a constrained or unconstrained run
+        gage_dir: Path
+            path to priors SOS directory
         """
         
         self.input_dir = input_dir
         self.run_type = run_type
         self.reach_id = reach_data["reach_id"]
         print('Processing', self.reach_id)
-        self.gage_data = self.read_gage_data(input_dir / "sos" / reach_data["sos"])
+        self.gage_data = self.read_gage_data(gage_dir / reach_data["sos"])
         self.offline_data = self.read_offline_data(offline_dir)
         self.output_dir = output_dir
 
@@ -420,7 +425,7 @@ class ValidationConfluence:
 
         out.close()
 
-def get_reach_data(input_json,index_to_run):
+def get_reach_data(input_json,index_to_run,sos_bucket):
         """Retrun dictionary of reach data.
         
         Parameters
@@ -440,26 +445,64 @@ def get_reach_data(input_json,index_to_run):
 
         with open(INPUT / input_json) as json_file:
             reach_data = json.load(json_file)[index]
+
+        if sos_bucket:
+            sos_file = TMP_DIR.joinpath(reach_data["sos"])
+            download_sos(sos_bucket, sos_file)
+
         return reach_data
+  
+def create_args():
+    """Create and return argparsers with command line arguments."""
+    
+    arg_parser = argparse.ArgumentParser(description='Integrate FLPE')
+    arg_parser.add_argument('-i',
+                            '--index',
+                            type=int,
+                            help='Index to specify input data to execute on')
+    arg_parser.add_argument('-r',
+                            '--reachjson',
+                            type=str,
+                            help='Name of the reach.json',
+                            default='reach.json')
+    arg_parser.add_argument('-t',
+                            '--runtype',
+                            type=str,
+                            help='Indicates constrained or unconstrained run',
+                            choices=['constrained', 'unconstrained'],
+                            default='unconstrained')
+    arg_parser.add_argument('-s',
+                            '--sosbucket',
+                            type=str,
+                            help='Name of the SoS bucket and key to download from',
+                            default='')
+    return arg_parser
 
 def run_validation():
     """Orchestrate validation operations."""
+    
+    # commandline arguments
+    arg_parser = create_args()
+    args = arg_parser.parse_args()
 
-    try:
-        reach_json = sys.argv[1]
-        run_type = sys.argv[2]
-    except IndexError:
-        reach_json = "reaches.json"
-        run_type = "unconstrained"
+    reach_json = args.reachjson
+    run_type = args.runtype
+    index_to_run = args.index
+    sos_bucket = args.sosbucket
 
-    try:
-        index_to_run=int(sys.argv[3]) #integer
-    except IndexError:
-        index_to_run=-235 #code to indicate AWS run
+    print('index_to_run: ', index_to_run)
+    print('reach_json: ', reach_json)
+    print('run_type: ', run_type)
+    print('sos_bucket: ', sos_bucket)
 
-    reach_data = get_reach_data(reach_json,index_to_run)
+    reach_data = get_reach_data(reach_json,index_to_run,sos_bucket)
 
-    vc = ValidationConfluence(reach_data, OFFLINE, INPUT, OUTPUT, run_type)
+    if sos_bucket:
+        gage_dir = TMP_DIR
+    else:
+        gage_dir = INPUT_DIR.joinpath("sos")
+
+    vc = ValidationConfluence(reach_data, OFFLINE, INPUT, OUTPUT, run_type, gage_dir)
     vc.validate()
 
 if __name__ == "__main__": 
