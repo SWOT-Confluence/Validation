@@ -248,12 +248,16 @@ class ValidationConfluence:
        
 
         moi_file = f"{moi_dir}/{self.reach_id}_integrator.nc"
+        if not os.path.exists(moi_file):
+            print('MOI file does not exist for ', self.reach_id, 'exiting....')
+            sys.exit()
+
         moi = Dataset(moi_file, 'r')
         moi_data = {}
         moi_data["metroman"] =  moi["metroman/q"][:].filled(np.nan)
         moi_data["neobam"] =  moi["neobam/q"][:].filled(np.nan)
         moi_data["hivdi"] =  moi["hivdi/q"][:].filled(np.nan)
-        moi_data["momma"] =  moi["momma/q"]][:].filled(np.nan)
+        moi_data["momma"] =  moi["momma/q"][:].filled(np.nan)
         moi_data["sad"] = moi["sad/q"][:].filled(np.nan)
         moi_data["sic4dvar"] = moi["sic4dvar/q"][:].filled(np.nan)      
         moi.close()      
@@ -313,43 +317,56 @@ class ValidationConfluence:
             
             
         }
-
-        flpe_file_metroman = f"{flpe_dir}/{'metroman'}/{self.reach_id}_metroman.nc"
-        flpe_file_neobam = f"{flpe_dir}/{'geobam'}/{self.reach_id}_geobam.nc"
-        flpe_file_hivdi = f"{flpe_dir}/{'metroman'}/{self.reach_id}_hivdi.nc"
-        flpe_file_momma = f"{flpe_dir}/{'metroman'}/{self.reach_id}_momma.nc"
-        flpe_file_sad = f"{flpe_dir}/{'metroman'}/{self.reach_id}_sad.nc"
-        flpe_file_sic4dvar = f"{flpe_dir}/{'metroman'}/{self.reach_id}_sic4dvar.nc"
-
-        flpe_mm = Dataset(flpe_file_metroman, 'r')
-        flpe_nb = Dataset(flpe_file_neobam, 'r')
-        flpe_hi = Dataset(flpe_file_hivdi, 'r')
-        flpe_mo = Dataset(flpe_file_momma, 'r')
-        flpe_sa = Dataset(flpe_file_sad, 'r')
-        flpe_si = Dataset(flpe_file_sic4dvar, 'r')
-
         flpe_data = {}
-        flpe_data["metroman"] =  flpe_mm[convention_dict["metroman"]][:].filled(np.nan)
-        flpe_data["neobam"] =  flpe_nb[convention_dict["neobam"]][:].filled(np.nan)
-        flpe_data["hivdi"] =  flpe_hi[convention_dict["hivdi"]][:].filled(np.nan)
-        flpe_data["momma"] =  flpe_mo[convention_dict["momma"]][:].filled(np.nan)
-        flpe_data["sad"] = flpe_sa[convention_dict["sads"]][:].filled(np.nan)
-        flpe_data["sic4dvar"] = flpe_si[convention_dict["sic4dvar"]][:].filled(np.nan)    
+        for alg_name in list(convention_dict.keys()):
+            flpe_file = os.path.join(flpe_dir, alg_name, f'{self.reach_id}_metroman.nc')
+            if os.path.exists(flpe_file):
+                flpe_data = Dataset(flpe_file, 'r')
+                flpe_data[alg_name] = flpe_data[convention_dict[alg_name]][:].filled(np.nan)
+                flpe_data.close()
+            else:
+                flpe_data[alg_name] = [np.nan]
+    
 
-        flpe_mm.close()
-        flpe_nb.close()
-        flpe_hi.close()
-        flpe_mo.close()
-        flpe_sa.close()
-        flpe_si.close()
+
+        # flpe_file_metroman = f"{flpe_dir}/{'metroman'}/{self.reach_id}_metroman.nc"
+        # flpe_file_neobam = f"{flpe_dir}/{'geobam'}/{self.reach_id}_geobam.nc"
+        # flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_hivdi.nc"
+        # flpe_file_momma = f"{flpe_dir}/{'momma'}/{self.reach_id}_momma.nc"
+        # flpe_file_sad = f"{flpe_dir}/{'sad'}/{self.reach_id}_sad.nc"
+        # flpe_file_sic4dvar = f"{flpe_dir}/{'sic4dvar'}/{self.reach_id}_sic4dvar.nc"
+
+        # flpe_mm = Dataset(flpe_file_metroman, 'r')
+        # flpe_nb = Dataset(flpe_file_neobam, 'r')
+        # flpe_hi = Dataset(flpe_file_hivdi, 'r')
+        # flpe_mo = Dataset(flpe_file_momma, 'r')
+        # flpe_sa = Dataset(flpe_file_sad, 'r')
+        # flpe_si = Dataset(flpe_file_sic4dvar, 'r')
+
+        # flpe_data = {}
+        # flpe_data["metroman"] =  flpe_mm[convention_dict["metroman"]][:].filled(np.nan)
+        # flpe_data["neobam"] =  flpe_nb[convention_dict["neobam"]][:].filled(np.nan)
+        # flpe_data["hivdi"] =  flpe_hi[convention_dict["hivdi"]][:].filled(np.nan)
+        # flpe_data["momma"] =  flpe_mo[convention_dict["momma"]][:].filled(np.nan)
+        # flpe_data["sad"] = flpe_sa[convention_dict["sads"]][:].filled(np.nan)
+        # flpe_data["sic4dvar"] = flpe_si[convention_dict["sic4dvar"]][:].filled(np.nan)    
+
+        # flpe_mm.close()
+        # flpe_nb.close()
+        # flpe_hi.close()
+        # flpe_mo.close()
+        # flpe_sa.close()
+        # flpe_si.close()
 
 
         #create pre-offline consensus
-        ALLQ=np.full((len(flpe_data.keys()), len(flpe_data["metroman"])), np.nan)
+        ALLQ=np.full((len(flpe_data.keys()), len(flpe_data["momma"])), np.nan)
         for row in range(len(flpe_data.keys())):
-            ALGv=flpe_data[flpe_data.keys()[row]]        
-            ALGv[ALGv<0]=np.nan
-            ALLQ[row,:]=ALGv
+            ALGv=flpe_data[list(flpe_data.keys())[row]]
+            if type(ALGv) == list:
+                # ALGv[ALGv<0]=np.nan
+                ALGv = [np.nan if x <0 else x for x in ALGv]
+                ALLQ[row,:]=ALGv
 
         consensus=np.nanmedian(ALLQ,axis=0)
         flpe_data["consensus"]=consensus
