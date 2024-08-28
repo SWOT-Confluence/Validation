@@ -249,7 +249,7 @@ class ValidationConfluence:
 
         moi_file = f"{moi_dir}/{self.reach_id}_integrator.nc"
         if not os.path.exists(moi_file):
-            print('MOI file does not exist for ', self.reach_id, 'exiting....')
+            print('MOI file does not exist for ', self.reach_id, 'exiting....', moi_file)
             sys.exit()
 
         moi = Dataset(moi_file, 'r')
@@ -265,7 +265,7 @@ class ValidationConfluence:
         #create pre-offline consensus
         ALLQ=np.full((len(moi_data.keys()), len(moi_data["metroman"])), np.nan)
         for row in range(len(moi_data.keys())):
-            ALGv=moi_data[moi_data.keys()[row]]        
+            ALGv=moi_data[list(moi_data.keys())[row]]        
             ALGv[ALGv<0]=np.nan
             ALLQ[row,:]=ALGv
 
@@ -500,20 +500,22 @@ class ValidationConfluence:
      
         # SWOT time 
         time = self.read_time_data()
+        
+        algo_dim = int(self.NUM_ALGOS/2)
 
         # Data fill values
         data_flpe = {
-            "algorithm": np.full((self.NUM_ALGOS/2), fill_value=""),
-            "Gid": np.full((self.NUM_ALGOS/2), fill_value=""),
-            "Spearmanr": np.full((self.NUM_ALGOS/2), fill_value=-9999),
-            "SIGe": np.full((self.NUM_ALGOS/2), fill_value=-9999),
-            "NSE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
-            "Rsq": np.full((self.NUM_ALGOS/2), fill_value=-9999),
-            "KGE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
-            "RMSE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
-            "n": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
-            "nRMSE":np.full((self.NUM_ALGOS/2), fill_value=-9999),           
-            "nBIAS":np.full((self.NUM_ALGOS/2), fill_value=-9999),            
+            "algorithm": np.full((algo_dim), fill_value=""),
+            "Gid": np.full((algo_dim), fill_value=""),
+            "Spearmanr": np.full((algo_dim), fill_value=-9999),
+            "SIGe": np.full((algo_dim), fill_value=-9999),
+            "NSE": np.full((algo_dim), fill_value=-9999),           
+            "Rsq": np.full((algo_dim), fill_value=-9999),
+            "KGE": np.full((algo_dim), fill_value=-9999),           
+            "RMSE": np.full((algo_dim), fill_value=-9999),           
+            "n": np.full((algo_dim), fill_value=-9999),           
+            "nRMSE":np.full((algo_dim), fill_value=-9999),           
+            "nBIAS":np.full((algo_dim), fill_value=-9999),            
             
            
         }
@@ -523,8 +525,9 @@ class ValidationConfluence:
         if self.gage_data:
             if self.flpe_data:
                 #### Check should go here for all nan gauge data ---------------------------------
+                print(self.gage_data)
                 data_flpe = stats(time, self.flpe_data, self.gage_data["qt"], 
-                            self.gage_data["q"], str(self.reach_id), 
+                            self.gage_data["q"], self.gage_data["gid"],str(self.reach_id), 
                             self.output_dir / "figs")
             else:
                 warnings.warn('No flpe data found...')
@@ -535,17 +538,17 @@ class ValidationConfluence:
         
        
         data_moi = {
-            "algorithm": np.full((self.NUM_ALGOS/2), fill_value=""),
-            "Gid": np.full((self.NUM_ALGOS/2), fill_value=""),
-            "Spearmanr": np.full((self.NUM_ALGOS/2), fill_value=-9999),
-            "SIGe": np.full((self.NUM_ALGOS/2), fill_value=-9999),
-            "NSE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
-            "Rsq": np.full((self.NUM_ALGOS/2), fill_value=-9999),
-            "KGE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
-            "RMSE": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
-            "n": np.full((self.NUM_ALGOS/2), fill_value=-9999),           
-            "nRMSE":np.full((self.NUM_ALGOS/2), fill_value=-9999),           
-            "nBIAS":np.full((self.NUM_ALGOS/2), fill_value=-9999),  
+            "algorithm": np.full((algo_dim), fill_value=""),
+            "Gid": np.full((algo_dim), fill_value=""),
+            "Spearmanr": np.full((algo_dim), fill_value=-9999),
+            "SIGe": np.full((algo_dim), fill_value=-9999),
+            "NSE": np.full((algo_dim), fill_value=-9999),           
+            "Rsq": np.full((algo_dim), fill_value=-9999),
+            "KGE": np.full((algo_dim), fill_value=-9999),           
+            "RMSE": np.full((algo_dim), fill_value=-9999),           
+            "n": np.full((algo_dim), fill_value=-9999),           
+            "nRMSE":np.full((algo_dim), fill_value=-9999),           
+            "nBIAS":np.full((algo_dim), fill_value=-9999),  
         }
 
         no_moi = False
@@ -618,13 +621,13 @@ class ValidationConfluence:
 
         fill = -999999999999
         empty = -9999
-
+        print('writing stats to ', self.output_dir)
         out = Dataset(self.output_dir / "stats" / f"{reach_id}_validation.nc", 'w')
         out.reach_id = reach_id
         out.description = f"Statistics for reach: {reach_id}"
         out.history = datetime.datetime.now().strftime('%d-%b-%Y %H:%M:%S')
-        out.has_validation_flpe = 0 if np.where(stats_flpe["algorithm"] == "")[0].size == self.NUM_ALGOS/2 else 1
-        out.has_validation_moi = 0 if np.where(stats_moi["algorithm"] == "")[0].size == self.NUM_ALGOS/2 else 1
+        out.has_validation_flpe = 0 if np.where(stats_flpe["algorithm"] == "")[0].size == algo_dim else 1
+        out.has_validation_moi = 0 if np.where(stats_moi["algorithm"] == "")[0].size == algo_dim else 1
         out.has_validation_o = 0 if np.where(stats_o["algorithm"] == "")[0].size == self.NUM_ALGOS else 1
         out.gage_type = gage_type.upper()
 
