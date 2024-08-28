@@ -11,186 +11,164 @@ import datetime
 import matplotlib.pyplot as plt  
 import matplotlib.dates as Pdate
 import numpy as np
+from scipy.stats import spearmanr
 
 
-def stats(St,Sq,Vt,Vq,IDstr,figdir):
-    
-    # figdir="C:/Users/coss.31/OneDrive - The Ohio State University/Documents/PYfun/valid/figs"
-    EMPTY=-9999
-    St=np.array(St)
-    # first define overlap times and filter timeseres before comparison
-    #pull actual Q and t from uniform mostly empty block
-    Vt_=Vt[np.logical_not(np.isnan(Vq))] 
-    Vq_=Vq[np.logical_not(np.isnan(Vq))]
-    #aditionally remove any -9999
-    Vt_=Vt_[Vq_>0]
-    Vq_=Vq_[Vq_>0]    
-    olt,idV,ids=np.intersect1d(Vt_,St,return_indices=True)# these are still potential matches, need to filter again per SWOTq algorithim
-    #t does not change between groups?
-    Vt_=Vt_[idV]
-    Vq_=Vq_[idV]
-    # with nans out index overlap times
+def stats(St,Sq_,Vt,Vq,gid,IDstr,figdir):
+    EMPTY=-9999    
+    ## trim and allign
+    Ro=[]
+    Gido=[]
+    SIGeo=[]
     NSEo=[]
     Rsqo=[]
     KGEo=[]
     RMSEo=[]
     nRMSEo=[]
-    nBIASo=[]
-    rRMSEo=[]
+    nBIASo=[]   
     no=[]
     offkey=[]
-    if len(Sq)<10:
-        for Grp in Sq:    
-            Sq_=Sq[Grp]       
-            Sq_=Sq_[ids]           
-            offkey.append(Grp)
-            ## strictly for testing I am converting -999999999999 to an array of posative value
-            #Sq_=np.random.uniform(low=0.0, high=300.0,size=len(Sq_))
-            if any(Sq_>EMPTY) and any(Vq_>EMPTY):
-                 #SWOT empty removal
-                St_=St[Sq_>0]
-                Sq_=Sq_[Sq_>0]
-                olt,idV,ids=np.intersect1d(Vt_,St_,return_indices=True)
-                Vt_t=Vt_[idV]
-                Vq_t=Vq_[idV]
-                St_ = St_[ids]
-                Sq_ = Sq_[ids]
-                
-                # NSE
-                top=np.sum((Vq_t-Sq_)**2)
-                bottom=np.sum((Vq_t-np.mean(Vq_t))**2)
-                NSE=1-(top/bottom)
-                NSEo.append(NSE)
-                 #Rsq
-                r=np.corrcoef( Sq_,Vq_t)
-                r=r[0,1]
-                Rsq=r**2
-                Rsqo.append(Rsq)
-                #KGE
-                KGE=1-np.sqrt((r-1)**2 + ((np.std( Sq_)/np.std(Vq_t))-1)**2 +((np.mean(Sq_)/np.mean(Vq_t))-1)**2)  
-                KGEo.append(KGE)
-                 #n
-                n=len(Vq_t)
-                no.append(n)
-                #RMSE
-                RMSE=np.sqrt((np.sum( (Sq_ - Vq_t)**2))/n)
-                RMSEo.append(RMSE)                
-                #nRMSE
-                NRMSE=RMSE/np.mean(Vq_t)
-                nRMSEo.append(NRMSE)
-                #nBIASo
-                BIAS= np.sum(Sq_ - Vq_t)/len( Vq_t)
-                nBIAS=BIAS/np.mean(Vq_t)
-                nBIASo.append(nBIAS)
-                #rRMSE
-                rRMSEo.append(np.sqrt(NRMSE**2-nBIAS**2))
-                
-            else:
-                    NSEo.append(EMPTY)
-                    Rsqo.append(EMPTY)
-                    KGEo.append(EMPTY)
-                    no.append(EMPTY)
-                    RMSEo.append(EMPTY)
-                    nRMSEo.append(EMPTY)
-                    nBIASo.append(EMPTY)
-                    rRMSEo.append(EMPTY)                    
+    STST=[]
+    for algo in Sq_:
+        print(algo)
        
-        validout={
-            "algorithm": np.array([offkey]),
-            "NSE":NSEo[:],
-            "Rsq":Rsqo[:],
-            "KGE":KGEo[:],
-            "RMSE":RMSEo[:],
-            "nRMSE":nRMSEo[:],
-            "nBIAS":nBIASo[:],
-            "rRMSE":rRMSEo[:],
-            "n":no[:],
-            "t":St
-            }
-    else:
-        
-        for Grp in Sq:
-            Sq_=Sq[Grp]
-            Sq_=Sq_[ids]           
-            St__= St[ids]
-            alg=Grp
-            offkey.append(Grp)
-            if any(Sq_>EMPTY) and any(Vq_>EMPTY):
-                 #SWOT empty removal
-                St_=St__[Sq_>0]
-                Sq_=Sq_[Sq_>0]
-                olt,idV,ids=np.intersect1d(Vt_,St_,return_indices=True)
-                Vt_t=Vt_[idV]
-                Vq_t=Vq_[idV]
-                St_ = St_[ids]
-                Sq_ = Sq_[ids]
-                #plot and save
-                strDates = []               
-                for day in Vt_t:
-                    date= datetime.date.fromordinal(day)
-                    strDates.append(date)
-                fig = plt.figure()                
-                ax = fig.add_subplot()
-                dates = Pdate.date2num(strDates)
-                ax.plot_date(dates, Vq_t, fmt='-',marker='o')
-                ax.plot_date(dates, Sq_, fmt='-',marker='o')               
+       
+        Sq=Sq_[algo]
+        if np.size(Sq)>3:#this will prevent failures on filled algo data         
+            STfilter=~np.isnan(St)
+            goodst=np.array(St)[STfilter]
+            
+            goodflpeq=Sq[STfilter]  
+            gqindex=[]
+            sqindex=[]
+            for time in goodst:
+                    tindex=np.where(Vt.astype(int)==int(time))[0]
+                    Stindex=np.where(goodst==int(time))[0]
+                    if np.size(tindex)>0:
+                        gqindex.append(tindex[0])
+                        sqindex.append(Stindex[0])
+                    else:
+                        gqindex.append(np.nan)
+                        sqindex.append(np.nan)
+
+            Ggqindex=~np.isnan(gqindex)
+            GQdx=np.array(gqindex)[Ggqindex]
+            GQdx=GQdx.astype(int)
+
+            Gsqindex=~np.isnan(sqindex)
+            GQsdx=np.array(sqindex)[Gsqindex]
+            GQsdx=GQsdx.astype(int)
+
+            Filtergq=np.array(Vq)[GQdx]
+            Filterst=goodst[GQsdx]
+            Filtersoneq=goodflpeq[GQsdx]    
+            flpefinalfilter=Filtersoneq>0
+            gfinalfilter=Filtergq>0
+            finalfilter= flpefinalfilter&gfinalfilter
+
+
+
+            Gq=Filtergq[finalfilter]
+            St_p=Filterst[finalfilter]    
+            Sq=Filtersoneq[finalfilter]
+            # Do the Stats
+            if len(Sq)>3: #we need three values to not break things with some of these stats functions
                
-                ax.set_ylabel('Q (m^3/s)')
-                ax.legend(['Gage',alg])
-                fig.autofmt_xdate()
-                # figname=figdir+'/'+IDstr+alg+'.jpg'
-                figname=f"{figdir}/{IDstr}_{alg}.jpg"
-                fig.savefig(figname)
-                
+                res= spearmanr(Sq, Gq)
+                r=res.statistic
+                Ro.append(r)       
+                Gido.append(gid)     
+                offkey.append(algo)            
+                #sigmaE
+                SIGeo.append(np.std((Gq-Sq))/np.mean(Gq))
                 # NSE
-                top=np.sum((Vq_t-Sq_)**2)
-                bottom=np.sum((Vq_t-np.mean(Vq_t))**2)
-                NSE=1-(top/bottom)
-                NSEo.append(NSE)
-                 #Rsq
-                r=np.corrcoef( Sq_,Vq_t)
-                r=r[0,1]
+                top=np.sum((Gq-Sq)**2)
+                bottom=np.sum((Gq-np.mean(Gq))**2)
+                NSE_=1-(top/bottom)
+                NSEo.append(NSE_)
+                #Rsq        
                 Rsq=r**2
                 Rsqo.append(Rsq)
                 #KGE
-                KGE=1-np.sqrt((r-1)**2 + ((np.std( Sq_)/np.std(Vq_t))-1)**2 +((np.mean(Sq_)/np.mean(Vq_t))-1)**2)  
-                KGEo.append(KGE)
-                 #n
-                n=len(Vq_t)
-                no.append(n)
+                KGE_=1-np.sqrt((r-1)**2 + ((np.std( Sq)/np.std(Gq))-1)**2 +((np.mean(Sq)/np.mean(Gq))-1)**2)
+                KGEo.append(KGE_)
+                #n
+                n_=len(Gq)
+                no.append(n_)
                 #RMSE
-                RMSE=np.sqrt((np.sum( (Sq_ - Vq_t)**2))/n)
-                RMSEo.append(RMSE)                
+                RMSE=np.sqrt((np.sum( (Sq - Gq)**2))/n_)
+                RMSEo.append(RMSE)
                 #nRMSE
-                NRMSE=RMSE/np.mean(Vq_t)
+                NRMSE=RMSE/np.mean(Gq)
                 nRMSEo.append(NRMSE)
                 #nBIASo
-                BIAS= np.sum(Sq_ - Vq_t)/len( Vq_t)
-                nBIAS=BIAS/np.mean(Vq_t)
+                BIAS= np.sum(Sq - Gq)/len(Gq)
+                nBIAS=BIAS/np.mean(Gq)
                 nBIASo.append(nBIAS)
-                #rRMSE
-                rRMSEo.append(np.sqrt(NRMSE**2-nBIAS**2))
-            else:
+                STST.append(St_p)
+                if len(Sq)>10: #We still want all our ts plots
+                    #plot and save
+                    strDates = []
+                 
+                    for day in St_p:
+                        date= datetime.date.fromordinal(int(day))
+                        strDates.append(date)
+                    fig = plt.figure()                
+                    ax = fig.add_subplot()
+                    dates = Pdate.date2num(strDates)
+                    ax.plot_date(dates, Gq, fmt='-',marker='o')
+                    ax.plot_date(dates, Sq, fmt='-',marker='o')               
+
+                    ax.set_ylabel('Q (m^3/s)')
+                    ax.legend(['Gage',algo])
+                    fig.autofmt_xdate()                
+                    figname=f"{figdir}/{IDstr}_{algo}.jpg"
+                    fig.savefig(figname)      
+       
+                else:
+                    Ro.append(EMPTY)
+                    Gido.append(gid)
+                    SIGeo.append(EMPTY)
                     NSEo.append(EMPTY)
                     Rsqo.append(EMPTY)
                     KGEo.append(EMPTY)
-                    no.append(EMPTY)
-                    RMSEo.append(EMPTY)
+                    RMSEo.append(EMPTY) 
                     nRMSEo.append(EMPTY)
-                    nBIASo.append(EMPTY)
-                    rRMSEo.append(EMPTY) 
-        validout={
-            "algorithm": np.array([offkey]),
-            "NSE":NSEo[:],
-            "Rsq":Rsqo[:],
-            "KGE":KGEo[:],
-            "RMSE":RMSEo[:],
-            "nRMSE":nRMSEo[:],
-            "nBIAS":nBIASo[:],
-            "rRMSE":rRMSEo[:],
-            "n":no[:],
-            "t":St
-            }
+                    nBIASo.append(EMPTY)      
+                    no.append(len(Sq))
+                    offkey.append(algo)
+                    STST.append(EMPTY)
+
+        else:
+            Ro.append(EMPTY)
+            Gido.append(gid)
+            SIGeo.append(EMPTY)
+            NSEo.append(EMPTY)
+            Rsqo.append(EMPTY)
+            KGEo.append(EMPTY)
+            RMSEo.append(EMPTY) 
+            nRMSEo.append(EMPTY)
+            nBIASo.append(EMPTY)      
+            no.append(EMPTY)
+            offkey.append(algo)
+            STST.append(EMPTY)
+    
+    St=np.array(St)
+    St[np.isnan(St)]=EMPTY   
+    validout={
+        "algorithm": np.array([offkey]),
+        "Gid": np.array(Gido),
+        "Spearmanr":Ro[:],
+        "SIGe":SIGeo[:],
+        "NSE":NSEo[:],
+        "Rsq":Rsqo[:],
+        "KGE":KGEo[:],
+        "RMSE":RMSEo[:],
+        "nRMSE":nRMSEo[:],
+        "nBIAS":nBIASo[:],            
+        "n":no[:],
+        "t": St
+        }
    
     return  validout
     
