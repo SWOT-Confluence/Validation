@@ -230,6 +230,7 @@ class ValidationConfluence:
             gage_data["q"] = gage[f"{gage_type}_q"][index][:].filled(np.nan)
             gage_data["qt"] = gage[f"{gage_type}_qt"][index][:].filled(self.INT_FILL).astype(int)
             gage_data["gid"] = chartostring(gage[f"{gage_type}_id"][index][:].filled(np.nan))
+
             
         return gage_data
     
@@ -542,6 +543,7 @@ class ValidationConfluence:
             "nRMSE":np.full(algo_dim, fill_value=-9999),           
             "nBIAS":np.full(algo_dim, fill_value=-9999),
             "t":np.full((self.NUM_ALGOS), fill_value=-9999),
+
             
            
         }
@@ -563,6 +565,7 @@ class ValidationConfluence:
         
        
         data_moi = {
+
             "algorithm": np.full( algo_dim, fill_value=""),
             "Gid": np.full( algo_dim, fill_value=""),
             "Spearmanr": np.full( algo_dim, fill_value=-9999),
@@ -575,6 +578,7 @@ class ValidationConfluence:
             "nRMSE":np.full( algo_dim, fill_value=-9999),           
             "nBIAS":np.full( algo_dim, fill_value=-9999),
              "t":np.full((self.NUM_ALGOS), fill_value=-9999),
+
         }
 
         no_moi = False
@@ -584,6 +588,7 @@ class ValidationConfluence:
                 #### Check should go here for all nan gauge data ---------------------------------
                 data_moi = stats(time, self.moi_data, self.gage_data["qt"], 
                             self.gage_data["q"],self.gage_data["gid"], str(self.reach_id), 
+
                             self.output_dir / "figs")
             else:
                 warnings.warn('No moi data found...')
@@ -606,6 +611,7 @@ class ValidationConfluence:
             "nRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),           
             "nBIAS":np.full((self.NUM_ALGOS), fill_value=-9999),
             "t":np.full((self.NUM_ALGOS), fill_value=-9999),
+
             
         }
         
@@ -635,6 +641,7 @@ class ValidationConfluence:
         MOIno=GO[1]
         OFFno=GO[2]
         #print(stats_flpe)
+
         """Write stats to NetCDF file.
         
         Parameters
@@ -873,8 +880,6 @@ class ValidationConfluence:
             nb_v_o = out.createVariable("nBIAS_o", "f8", ("num_algos_o",), fill_value=fill)
             nb_v_o.units = "none"
             nb_v_o[:] =empty        
-
-       
 
         out.close()
 
