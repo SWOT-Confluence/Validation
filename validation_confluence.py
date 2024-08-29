@@ -698,6 +698,42 @@ class ValidationConfluence:
             nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
             nb_v_flpe.units = "none"
             nb_v_flpe[:] = np.where(np.isclose(stats_flpe["nBIAS"], empty), fill, stats_flpe["nBIAS"])
+        else:
+            #flpe fill dimenstion
+            f_dim_flpe = out.createDimension("num_algos_flpe", 1)
+            c_dim_flpe = out.createDimension("nchar_flpe", 1)
+            c_dim_gage = out.createDimension("nchar_gage", 1)
+            t_dim_flpe = out.createDimension("time_flpe", 1)
+            t_v_flpe = out.createVariable("time_flpe", "i4", ("time_flpe",))
+            t_v_flpe.units = "days since Jan 1 Year 1"       
+            t_v_flpe[:] = empty
+            
+            a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos_flpe", "nchar_flpe"),)        
+            a_v_flpe[:] = empty
+           
+            gid_v_flpe = out.createVariable("gageID_flpe", "S1", ("num_algos_flpe", "nchar_gage"), fill_value=fill)
+            gid_v_flpe[:] = empty
+            r_v_flpe = out.createVariable("Spearmanr_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            r_v_flpe[:] = empty
+            sige_v_flpe = out.createVariable("SIGe_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            sige_v_flpe[:] = empty
+            nse_v_flpe = out.createVariable("NSE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            nse_v_flpe[:] =empty
+            rsq_v_flpe = out.createVariable("Rsq_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            rsq_v_flpe[:] = empty       
+            kge_v_flpe = out.createVariable("KGE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            kge_v_flpe[:] = empty
+            rmse_v_flpe = out.createVariable("RMSE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            rmse_v_flpe.units = "m^3/s"
+            rmse_v_flpe[:] = empty
+            n_v_flpe = out.createVariable("testn_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            n_v_flpe[:] = empty
+            nrmse_v_flpe = out.createVariable("nRMSE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            nrmse_v_flpe.units = "none"
+            nrmse_v_flpe[:] = empty
+            nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            nb_v_flpe.units = "none"
+            nb_v_flpe[:] = empty
        
        
        
@@ -733,7 +769,40 @@ class ValidationConfluence:
             nrmse_v_moi[:] = np.where(np.isclose(stats_moi["nRMSE"], empty), fill, stats_moi["nRMSE"])
             nb_v_moi = out.createVariable("nBIAS_moi", "f8", ("num_algos_moi",), fill_value=fill)
             nb_v_moi.units = "none"
-            nb_v_moi[:] = np.where(np.isclose(stats_moi["nBIAS"], empty), fill, stats_moi["nBIAS"]) 
+            nb_v_moi[:] = np.where(np.isclose(stats_moi["nBIAS"], empty), fill, stats_moi["nBIAS"])
+        else:
+            #moi dimenstion
+            a_dim_moi = out.createDimension("num_algos_moi",1)
+            c_dim_moi = out.createDimension("nchar_moi", 1)
+            t_dim_moi = out.createDimension("time_moi", 1)
+            t_v_moi = out.createVariable("time_moi", "i4", ("time_moi",))
+            t_v_moi.units = "days since Jan 1 Year 1"
+            t_v_moi[:] = empty
+            a_v_moi = out.createVariable("algorithm_moi", 'S1', ("num_algos_moi", "nchar_moi"),)
+            a_v_moi[:] =  empty
+            gid_v_moi = out.createVariable("gageID_moi", "S1", ("num_algos_moi", "nchar_gage"), fill_value=fill)
+            gid_v_moi[:] =  empty
+            r_v_moi = out.createVariable("Spearmanr_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            r_v_moi[:] =  empty          
+            sige_v_moi = out.createVariable("SIGe_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            sige_v_moi[:] =  empty       
+            nse_v_moi = out.createVariable("NSE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            nse_v_moi[:] =  empty    
+            rsq_v_moi = out.createVariable("Rsq_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            rsq_v_moi[:] = empty                       
+            kge_v_moi = out.createVariable("KGE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            kge_v_moi[:] = empty
+            rmse_v_moi = out.createVariable("RMSE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            rmse_v_moi.units = "m^3/s"
+            rmse_v_moi[:] =  empty
+            n_v_moi = out.createVariable("testn_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            n_v_moi[:] = np.where(np.isclose(stats_moi["n"], empty), fill, stats_moi["n"])
+            nrmse_v_moi = out.createVariable("nRMSE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            nrmse_v_moi.units = "none"
+            nrmse_v_moi[:] =  empty
+            nb_v_moi = out.createVariable("nBIAS_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            nb_v_moi.units = "none"
+            nb_v_moi[:] =  empty 
        
      
         
@@ -774,7 +843,40 @@ class ValidationConfluence:
             nrmse_v_o[:] = np.where(np.isclose(stats_O["nRMSE"], empty), fill, stats_O["nRMSE"])
             nb_v_o = out.createVariable("nBIAS_o", "f8", ("num_algos_o",), fill_value=fill)
             nb_v_o.units = "none"
-            nb_v_o[:] = np.where(np.isclose(stats_O["nBIAS"], empty), fill, stats_O["nBIAS"])     
+            nb_v_o[:] = np.where(np.isclose(stats_O["nBIAS"], empty), fill, stats_O["nBIAS"])
+        else:
+             #offline dimenstion
+            a_dim_o = out.createDimension("num_algos_o", 1)
+            c_dim_o = out.createDimension("nchar_o", 1)
+            t_dim_o = out.createDimension("time_o", 1)
+            t_v_o = out.createVariable("time_o", "i4", ("time_o",))
+            t_v_o.units = "days since Jan 1 Year 1"
+            t_v_o[:] = empty
+            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_o", "nchar_o"),)      
+            a_v_o[:] = empty
+            gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos_o", "nchar_gage"), fill_value=fill)
+            gid_v_o[:] = empty
+            r_v_o = out.createVariable("Spearmanr_o", "f8", ("num_algos_o",), fill_value=fill)
+            r_v_o[:] = empty           
+            sige_v_o = out.createVariable("SIGe_o", "f8", ("num_algos_o",), fill_value=fill)
+            sige_v_o[:] = empty               
+            nse_v_o = out.createVariable("NSE_o", "f8", ("num_algos_o",), fill_value=fill)
+            nse_v_o[:] = empty           
+            rsq_v_o = out.createVariable("Rsq_o", "f8", ("num_algos_o",), fill_value=fill)
+            rsq_v_o[:] = empty    
+            kge_v_o = out.createVariable("KGE_o", "f8", ("num_algos_o",), fill_value=fill)
+            kge_v_o[:] = empty           
+            rmse_v_o = out.createVariable("RMSE_o", "f8", ("num_algos_o",), fill_value=fill)
+            rmse_v_o.units = "m^3/s"
+            rmse_v_o[:] =empty
+            n_v_o = out.createVariable("testn_o", "f8", ("num_algos_o",), fill_value=fill)
+            n_v_o[:] =empty
+            nrmse_v_o = out.createVariable("nRMSE_o", "f8", ("num_algos_o",), fill_value=fill)
+            nrmse_v_o.units = "none"
+            nrmse_v_o[:] =empty
+            nb_v_o = out.createVariable("nBIAS_o", "f8", ("num_algos_o",), fill_value=fill)
+            nb_v_o.units = "none"
+            nb_v_o[:] =empty        
 
        
 
