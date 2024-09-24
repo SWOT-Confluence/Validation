@@ -459,12 +459,13 @@ def create_args():
     arg_parser.add_argument('-i',
                             '--index',
                             type=int,
+                            # default=-235,
                             help='Index to specify input data to execute on')
     arg_parser.add_argument('-r',
                             '--reachjson',
                             type=str,
-                            help='Name of the reach.json',
-                            default='reach.json')
+                            help='Name of the reaches.json',
+                            default='reaches.json')
     arg_parser.add_argument('-t',
                             '--runtype',
                             type=str,
@@ -487,8 +488,13 @@ def run_validation():
 
     reach_json = args.reachjson
     run_type = args.runtype
-    index_to_run = args.index
     sos_bucket = args.sosbucket
+
+    index_to_run = args.index
+
+    # 0.2 specify index to run. pull from command line arg or set to default = AWSf
+    if args.index == -235:
+        index_to_run = int(os.environ.get("AWS_BATCH_JOB_ARRAY_INDEX"))
 
     print('index_to_run: ', index_to_run)
     print('reach_json: ', reach_json)
