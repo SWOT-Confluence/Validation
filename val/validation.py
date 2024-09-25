@@ -125,19 +125,19 @@ def stats(St,Sq_,Vt,Vq,gid,IDstr,figdir):
                     figname=f"{figdir}/{IDstr}_{algo}.jpg"
                     fig.savefig(figname)      
        
-                else:
-                    Ro.append(EMPTY)
-                    Gido.append(gid)
-                    SIGeo.append(EMPTY)
-                    NSEo.append(EMPTY)
-                    Rsqo.append(EMPTY)
-                    KGEo.append(EMPTY)
-                    RMSEo.append(EMPTY) 
-                    nRMSEo.append(EMPTY)
-                    nBIASo.append(EMPTY)      
-                    no.append(len(Sq))
-                    offkey.append(algo)
-                    STST.append(EMPTY)
+                # else:
+                #     Ro.append(EMPTY)
+                #     Gido.append(gid)
+                #     SIGeo.append(EMPTY)
+                #     NSEo.append(EMPTY)
+                #     Rsqo.append(EMPTY)
+                #     KGEo.append(EMPTY)
+                #     RMSEo.append(EMPTY) 
+                #     nRMSEo.append(EMPTY)
+                #     nBIASo.append(EMPTY)      
+                #     no.append(len(Sq))
+                #     offkey.append(algo)
+                #     STST.append(EMPTY)
 
         else:
             Ro.append(EMPTY)
