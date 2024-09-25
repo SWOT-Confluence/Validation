@@ -305,7 +305,7 @@ class ValidationConfluence:
         dictionary of algorithm moi results
         """
         convention_dict = {
-            "metroman":"allq",
+            "metroman":"average/allq",
             "neobam":"q/q",
             "hivdi":"reach/Q",
             "momma":"Q",
@@ -317,7 +317,7 @@ class ValidationConfluence:
 
         flpe_file_metroman = f"{flpe_dir}/{'metroman'}/{self.reach_id}_metroman.nc"
         flpe_file_neobam = f"{flpe_dir}/{'geobam'}/{self.reach_id}_geobam.nc"
-        flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_hivdi.nc"
+        flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_h2ivdi.nc"
         flpe_file_momma = f"{flpe_dir}/{'momma'}/{self.reach_id}_momma.nc"
         flpe_file_sad = f"{flpe_dir}/{'sad'}/{self.reach_id}_sad.nc"
         flpe_file_sic4dvar = f"{flpe_dir}/{'sic4dvar'}/{self.reach_id}_sic4dvar.nc"
@@ -348,6 +348,7 @@ class ValidationConfluence:
       
         
         flpe_data = {}
+        conlen = 0
         
         if flpe_mm==-9999:
             flpe_data["metroman"]=-9999
@@ -386,23 +387,25 @@ class ValidationConfluence:
             conlen=len(flpe_data["sic4dvar"])
             flpe_si.close()
 
-       
-        #create pre-offline consensus
-        ALLQ=np.full((len(flpe_data.keys()),  conlen), np.nan)
-        for row in range(len(flpe_data.keys())):
-            ALGv=flpe_data[list(flpe_data.keys())[row]]
-            if np.size(ALGv)==conlen:
-                ALGv[ALGv<0]=np.nan
-                ALLQ[row,:]=ALGv
-            
+        if conlen > 0:
+            #create pre-offline consensus
+            ALLQ=np.full((len(flpe_data.keys()),  conlen), np.nan)
+            for row in range(len(flpe_data.keys())):
+                ALGv=flpe_data[list(flpe_data.keys())[row]]
+                if np.size(ALGv)==conlen:
+                    ALGv[ALGv<0]=np.nan
+                    ALLQ[row,:]=ALGv
+                
 
-        consensus=np.nanmedian(ALLQ,axis=0)
-        flpe_data["consensus"]=consensus
-        
-        
-        if self.is_flpe_valid(flpe_data):
-            return flpe_data
-        else: 
+            consensus=np.nanmedian(ALLQ,axis=0)
+            flpe_data["consensus"]=consensus
+            
+            
+            if self.is_flpe_valid(flpe_data):
+                return flpe_data
+            else: 
+                return {}
+        else:
             return {}
     
     def is_flpe_valid(self, flpe_data):
@@ -431,7 +434,7 @@ class ValidationConfluence:
             path to offline data directory
         
         Returns
-        -------
+        -------ff
         dictionary of algorithm offline results
         """
         convention_dict = {
