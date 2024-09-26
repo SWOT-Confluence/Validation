@@ -317,7 +317,7 @@ class ValidationConfluence:
 
         flpe_file_metroman = f"{flpe_dir}/{'metroman'}/{self.reach_id}_metroman.nc"
         flpe_file_neobam = f"{flpe_dir}/{'geobam'}/{self.reach_id}_geobam.nc"
-        flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_h2ivdi.nc"
+        # flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_h2ivdi.nc"
         flpe_file_momma = f"{flpe_dir}/{'momma'}/{self.reach_id}_momma.nc"
         flpe_file_sad = f"{flpe_dir}/{'sad'}/{self.reach_id}_sad.nc"
         flpe_file_sic4dvar = f"{flpe_dir}/{'sic4dvar'}/{self.reach_id}_sic4dvar.nc"
@@ -510,7 +510,7 @@ class ValidationConfluence:
         list of ordinal times
         """
 
-        swot = Dataset(self.input_dir / "swot" / f"{self.reach_id}_SWOT.nc", 'r')
+        swot = Dataset(self.input_dir / "GOOD_DOMAIN_1_SWOT" / f"{self.reach_id}_SWOT.nc", 'r')
         time = swot["reach"]["time"][:].filled(np.nan)
         swot.close()
         epoch = datetime.datetime(2000,1,1,0,0,0)
