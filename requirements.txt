@@ -19,6 +19,5 @@ six==1.16.0
 typing-extensions==3.10.0.2
 urllib3==2.2.2
 wrapt==1.12.1
-yarl==1.6.3
 seaborn
 scipy
