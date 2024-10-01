@@ -317,7 +317,7 @@ class ValidationConfluence:
 
         flpe_file_metroman = f"{flpe_dir}/{'metroman'}/{self.reach_id}_metroman.nc"
         flpe_file_neobam = f"{flpe_dir}/{'geobam'}/{self.reach_id}_geobam.nc"
-        flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_h2ivdi.nc"
+        # flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_h2ivdi.nc"
         flpe_file_momma = f"{flpe_dir}/{'momma'}/{self.reach_id}_momma.nc"
         flpe_file_sad = f"{flpe_dir}/{'sad'}/{self.reach_id}_sad.nc"
         flpe_file_sic4dvar = f"{flpe_dir}/{'sic4dvar'}/{self.reach_id}_sic4dvar.nc"
@@ -672,217 +672,182 @@ class ValidationConfluence:
         out.has_validation_moi = 0 if np.where(stats_moi["algorithm"] == "")[0].size == self.NUM_ALGOS/2 else 1
         out.has_validation_o = 0 if np.where(stats_O["algorithm"] == "")[0].size == self.NUM_ALGOS else 1
         out.gage_type = gage_type.upper()
+        #generate uniform dimensions here
+        #one set of dimentions
+        a_dim = out.createDimension("num_algos", None)
+        c_dim_flpe = out.createDimension("nchar_flpe", None)
+        c_dim_gage = out.createDimension("nchar_gage", None)
+        t_dim = out.createDimension("time", len(stats_flpe["t"]))
+        t_v_flpe = out.createVariable("time", "i4", ("time",))
+        t_v_flpe.units = "days since Jan 1 Year 1"       
+        t_v_flpe[:] = stats_flpe["t"]
+
         if FLPEno== False:    
-            #flpe dimenstion
-            a_dim_flpe = out.createDimension("num_algos_flpe", None)
-            c_dim_flpe = out.createDimension("nchar_flpe", None)
-            c_dim_gage = out.createDimension("nchar_gage", None)
-            t_dim_flpe = out.createDimension("time_flpe", len(stats_flpe["t"]))
-            t_v_flpe = out.createVariable("time_flpe", "i4", ("time_flpe",))
-            t_v_flpe.units = "days since Jan 1 Year 1"       
-            t_v_flpe[:] = stats_flpe["t"]
-            
-            a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos_flpe", "nchar_flpe"),)        
+            a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos", "nchar_flpe"),)        
             a_v_flpe[:] = stringtochar(stats_flpe["algorithm"][0].astype("S16"))
            
-            gid_v_flpe = out.createVariable("gageID_flpe", "S1", ("num_algos_flpe", "nchar_gage"), fill_value=fill)
+            gid_v_flpe = out.createVariable("gageID_flpe", "S1", ("num_algos", "nchar_gage"), fill_value=fill)
             gid_v_flpe[:] = stringtochar(stats_flpe["Gid"][:].astype("S16"))
-            r_v_flpe = out.createVariable("Spearmanr_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            r_v_flpe = out.createVariable("Spearmanr_flpe", "f8", ("num_algos",), fill_value=fill)
             r_v_flpe[:] = np.where(np.isclose(stats_flpe["Spearmanr"], empty), fill, stats_flpe["Spearmanr"])
-            sige_v_flpe = out.createVariable("SIGe_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            sige_v_flpe = out.createVariable("SIGe_flpe", "f8", ("num_algos",), fill_value=fill)
             sige_v_flpe[:] = np.where(np.isclose(stats_flpe["SIGe"], empty), fill, stats_flpe["SIGe"])
-            nse_v_flpe = out.createVariable("NSE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            nse_v_flpe = out.createVariable("NSE_flpe", "f8", ("num_algos",), fill_value=fill)
             nse_v_flpe[:] = np.where(np.isclose(stats_flpe["NSE"], empty), fill, stats_flpe["NSE"])
-            rsq_v_flpe = out.createVariable("Rsq_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            rsq_v_flpe = out.createVariable("Rsq_flpe", "f8", ("num_algos",), fill_value=fill)
             rsq_v_flpe[:] = np.where(np.isclose(stats_flpe["Rsq"], empty), fill, stats_flpe["Rsq"])       
-            kge_v_flpe = out.createVariable("KGE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            kge_v_flpe = out.createVariable("KGE_flpe", "f8", ("num_algos",), fill_value=fill)
             kge_v_flpe[:] = np.where(np.isclose(stats_flpe["KGE"], empty), fill, stats_flpe["KGE"])
-            rmse_v_flpe = out.createVariable("RMSE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            rmse_v_flpe = out.createVariable("RMSE_flpe", "f8", ("num_algos",), fill_value=fill)
             rmse_v_flpe.units = "m^3/s"
             rmse_v_flpe[:] = np.where(np.isclose(stats_flpe["RMSE"], empty), fill, stats_flpe["RMSE"])
-            n_v_flpe = out.createVariable("testn_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            n_v_flpe = out.createVariable("testn_flpe", "f8", ("num_algos",), fill_value=fill)
             n_v_flpe[:] = np.where(np.isclose(stats_flpe["n"], empty), fill, stats_flpe["n"])
-            nrmse_v_flpe = out.createVariable("nRMSE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            nrmse_v_flpe = out.createVariable("nRMSE_flpe", "f8", ("num_algos",), fill_value=fill)
             nrmse_v_flpe.units = "none"
             nrmse_v_flpe[:] = np.where(np.isclose(stats_flpe["nRMSE"], empty), fill, stats_flpe["nRMSE"])
-            nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos",), fill_value=fill)
             nb_v_flpe.units = "none"
             nb_v_flpe[:] = np.where(np.isclose(stats_flpe["nBIAS"], empty), fill, stats_flpe["nBIAS"])
         else:
-            #flpe fill dimenstion
-            f_dim_flpe = out.createDimension("num_algos_flpe", 1)
-            c_dim_flpe = out.createDimension("nchar_flpe", 1)
-            c_dim_gage = out.createDimension("nchar_gage", 1)
-            t_dim_flpe = out.createDimension("time_flpe", 1)
-            t_v_flpe = out.createVariable("time_flpe", "i4", ("time_flpe",))
-            t_v_flpe.units = "days since Jan 1 Year 1"       
-            t_v_flpe[:] = empty
-            
-            a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos_flpe", "nchar_flpe"),)        
+            a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos", "nchar_flpe"),)        
             a_v_flpe[:] = empty
            
-            gid_v_flpe = out.createVariable("gageID_flpe", "S1", ("num_algos_flpe", "nchar_gage"), fill_value=fill)
+            gid_v_flpe = out.createVariable("gageID_flpe", "S1", ("num_algos", "nchar_gage"), fill_value=fill)
             gid_v_flpe[:] = empty
-            r_v_flpe = out.createVariable("Spearmanr_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            r_v_flpe = out.createVariable("Spearmanr_flpe", "f8", ("num_algos",), fill_value=fill)
             r_v_flpe[:] = empty
-            sige_v_flpe = out.createVariable("SIGe_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            sige_v_flpe = out.createVariable("SIGe_flpe", "f8", ("num_algos",), fill_value=fill)
             sige_v_flpe[:] = empty
-            nse_v_flpe = out.createVariable("NSE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            nse_v_flpe = out.createVariable("NSE_flpe", "f8", ("num_algos",), fill_value=fill)
             nse_v_flpe[:] =empty
-            rsq_v_flpe = out.createVariable("Rsq_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            rsq_v_flpe = out.createVariable("Rsq_flpe", "f8", ("num_algos",), fill_value=fill)
             rsq_v_flpe[:] = empty       
-            kge_v_flpe = out.createVariable("KGE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            kge_v_flpe = out.createVariable("KGE_flpe", "f8", ("num_algos",), fill_value=fill)
             kge_v_flpe[:] = empty
-            rmse_v_flpe = out.createVariable("RMSE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            rmse_v_flpe = out.createVariable("RMSE_flpe", "f8", ("num_algos",), fill_value=fill)
             rmse_v_flpe.units = "m^3/s"
             rmse_v_flpe[:] = empty
-            n_v_flpe = out.createVariable("testn_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            n_v_flpe = out.createVariable("testn_flpe", "f8", ("num_algos",), fill_value=fill)
             n_v_flpe[:] = empty
-            nrmse_v_flpe = out.createVariable("nRMSE_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            nrmse_v_flpe = out.createVariable("nRMSE_flpe", "f8", ("num_algos",), fill_value=fill)
             nrmse_v_flpe.units = "none"
             nrmse_v_flpe[:] = empty
-            nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
+            nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos",), fill_value=fill)
             nb_v_flpe.units = "none"
             nb_v_flpe[:] = empty
        
        
        
+       
         if MOIno== False:
-            #moi dimenstion
-            a_dim_moi = out.createDimension("num_algos_moi", None)
-            c_dim_moi = out.createDimension("nchar_moi", None)
-            t_dim_moi = out.createDimension("time_moi", len(stats_moi["t"]))
-            t_v_moi = out.createVariable("time_moi", "i4", ("time_moi",))
-            t_v_moi.units = "days since Jan 1 Year 1"
-            t_v_moi[:] = stats_flpe["t"]
-            a_v_moi = out.createVariable("algorithm_moi", 'S1', ("num_algos_moi", "nchar_moi"),)
+            a_v_moi = out.createVariable("algorithm_moi", 'S1', ("num_algos", "nchar_flpe"),)
             a_v_moi[:] = stringtochar(stats_moi["algorithm"][0].astype("S16"))
-            gid_v_moi = out.createVariable("gageID_moi", "S1", ("num_algos_moi", "nchar_gage"), fill_value=fill)
+            gid_v_moi = out.createVariable("gageID_moi", "S1", ("num_algos", "nchar_gage"), fill_value=fill)
             gid_v_moi[:] = stringtochar(stats_moi["Gid"][:].astype("S16"))
-            r_v_moi = out.createVariable("Spearmanr_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            r_v_moi = out.createVariable("Spearmanr_moi", "f8", ("num_algos",), fill_value=fill)
             r_v_moi[:] = np.where(np.isclose(stats_moi["Spearmanr"], empty), fill, stats_moi["Spearmanr"])            
-            sige_v_moi = out.createVariable("SIGe_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            sige_v_moi = out.createVariable("SIGe_moi", "f8", ("num_algos",), fill_value=fill)
             sige_v_moi[:] = np.where(np.isclose(stats_moi["SIGe"], empty), fill, stats_moi["SIGe"])        
-            nse_v_moi = out.createVariable("NSE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            nse_v_moi = out.createVariable("NSE_moi", "f8", ("num_algos",), fill_value=fill)
             nse_v_moi[:] = np.where(np.isclose(stats_moi["NSE"], empty), fill, stats_moi["NSE"])       
-            rsq_v_moi = out.createVariable("Rsq_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            rsq_v_moi = out.createVariable("Rsq_moi", "f8", ("num_algos",), fill_value=fill)
             rsq_v_moi[:] = np.where(np.isclose(stats_moi["Rsq"], empty), fill, stats_moi["Rsq"])                       
-            kge_v_moi = out.createVariable("KGE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            kge_v_moi = out.createVariable("KGE_moi", "f8", ("num_algos",), fill_value=fill)
             kge_v_moi[:] = np.where(np.isclose(stats_moi["KGE"], empty), fill, stats_moi["KGE"])
-            rmse_v_moi = out.createVariable("RMSE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            rmse_v_moi = out.createVariable("RMSE_moi", "f8", ("num_algos",), fill_value=fill)
             rmse_v_moi.units = "m^3/s"
             rmse_v_moi[:] = np.where(np.isclose(stats_moi["RMSE"], empty), fill, stats_moi["RMSE"])
-            n_v_moi = out.createVariable("testn_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            n_v_moi = out.createVariable("testn_moi", "f8", ("num_algos",), fill_value=fill)
             n_v_moi[:] = np.where(np.isclose(stats_moi["n"], empty), fill, stats_moi["n"])
-            nrmse_v_moi = out.createVariable("nRMSE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            nrmse_v_moi = out.createVariable("nRMSE_moi", "f8", ("num_algos",), fill_value=fill)
             nrmse_v_moi.units = "none"
             nrmse_v_moi[:] = np.where(np.isclose(stats_moi["nRMSE"], empty), fill, stats_moi["nRMSE"])
-            nb_v_moi = out.createVariable("nBIAS_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            nb_v_moi = out.createVariable("nBIAS_moi", "f8", ("num_algos",), fill_value=fill)
             nb_v_moi.units = "none"
             nb_v_moi[:] = np.where(np.isclose(stats_moi["nBIAS"], empty), fill, stats_moi["nBIAS"])
         else:
-            #moi dimenstion
-            a_dim_moi = out.createDimension("num_algos_moi",1)
-            c_dim_moi = out.createDimension("nchar_moi", 1)
-            t_dim_moi = out.createDimension("time_moi", 1)
-            t_v_moi = out.createVariable("time_moi", "i4", ("time_moi",))
-            t_v_moi.units = "days since Jan 1 Year 1"
-            t_v_moi[:] = empty
-            a_v_moi = out.createVariable("algorithm_moi", 'S1', ("num_algos_moi", "nchar_moi"),)
+            a_v_moi = out.createVariable("algorithm_moi", 'S1', ("num_algos", "nchar_flpe"),)
             a_v_moi[:] =  empty
-            gid_v_moi = out.createVariable("gageID_moi", "S1", ("num_algos_moi", "nchar_gage"), fill_value=fill)
+            gid_v_moi = out.createVariable("gageID_moi", "S1", ("num_algos", "nchar_gage"), fill_value=fill)
             gid_v_moi[:] =  empty
-            r_v_moi = out.createVariable("Spearmanr_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            r_v_moi = out.createVariable("Spearmanr_moi", "f8", ("num_algos",), fill_value=fill)
             r_v_moi[:] =  empty          
-            sige_v_moi = out.createVariable("SIGe_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            sige_v_moi = out.createVariable("SIGe_moi", "f8", ("num_algos",), fill_value=fill)
             sige_v_moi[:] =  empty       
-            nse_v_moi = out.createVariable("NSE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            nse_v_moi = out.createVariable("NSE_moi", "f8", ("num_algos",), fill_value=fill)
             nse_v_moi[:] =  empty    
-            rsq_v_moi = out.createVariable("Rsq_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            rsq_v_moi = out.createVariable("Rsq_moi", "f8", ("num_algos",), fill_value=fill)
             rsq_v_moi[:] = empty                       
-            kge_v_moi = out.createVariable("KGE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            kge_v_moi = out.createVariable("KGE_moi", "f8", ("num_algos",), fill_value=fill)
             kge_v_moi[:] = empty
-            rmse_v_moi = out.createVariable("RMSE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            rmse_v_moi = out.createVariable("RMSE_moi", "f8", ("num_algos",), fill_value=fill)
             rmse_v_moi.units = "m^3/s"
             rmse_v_moi[:] =  empty
-            n_v_moi = out.createVariable("testn_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            n_v_moi = out.createVariable("testn_moi", "f8", ("num_algos",), fill_value=fill)
             n_v_moi[:] = np.where(np.isclose(stats_moi["n"], empty), fill, stats_moi["n"])
-            nrmse_v_moi = out.createVariable("nRMSE_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            nrmse_v_moi = out.createVariable("nRMSE_moi", "f8", ("num_algos",), fill_value=fill)
             nrmse_v_moi.units = "none"
             nrmse_v_moi[:] =  empty
-            nb_v_moi = out.createVariable("nBIAS_moi", "f8", ("num_algos_moi",), fill_value=fill)
+            nb_v_moi = out.createVariable("nBIAS_moi", "f8", ("num_algos",), fill_value=fill)
             nb_v_moi.units = "none"
-            nb_v_moi[:] =  empty 
+            nb_v_moi[:] =  empty
        
      
         
          
         if OFFno== False:
-        #offline dimenstion
-            a_dim_o = out.createDimension("num_algos_o", None)
-            c_dim_o = out.createDimension("nchar_o", None)
-            t_dim_o = out.createDimension("time_o", len(stats_O["t"]))
-            t_v_o = out.createVariable("time_o", "i4", ("time_o",))
-            t_v_o.units = "days since Jan 1 Year 1"
-            t_v_o[:] = stats_O["t"]
-            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_o", "nchar_o"),)      
+            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos", "nchar_flpe"),)      
             a_v_o[:] = stringtochar(stats_O["algorithm"][0].astype("S16"))
-            gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos_o", "nchar_gage"), fill_value=fill)
+            gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos", "nchar_gage"), fill_value=fill)
             gid_v_o[:] = stringtochar(stats_O["Gid"][:].astype("S16"))
-            r_v_o = out.createVariable("Spearmanr_o", "f8", ("num_algos_o",), fill_value=fill)
-            r_v_o[:] = np.where(np.isclose(stats_O["Spearmanr"], empty), fill, stats_O["Spearmanr"])           
-            sige_v_o = out.createVariable("SIGe_o", "f8", ("num_algos_o",), fill_value=fill)
-            sige_v_o[:] = np.where(np.isclose(stats_O["SIGe"], empty), fill, stats_O["SIGe"])              
-            nse_v_o = out.createVariable("NSE_o", "f8", ("num_algos_o",), fill_value=fill)
+            r_v_o = out.createVariable("Spearmanr_o", "f8", ("num_algos",), fill_value=fill)
+            r_v_o[:] = np.where(np.isclose(stats_O["Spearmanr"], empty), fill, stats_O["Spearmanr"])                  
+            sige_v_o = out.createVariable("SIGe_o", "f8", ("num_algos",), fill_value=fill)
+            sige_v_o[:] = np.where(np.isclose(stats_O["SIGe"], empty), fill, stats_O["SIGe"])                
+            nse_v_o = out.createVariable("NSE_o", "f8", ("num_algos",), fill_value=fill)
             nse_v_o[:] = np.where(np.isclose(stats_O["NSE"], empty), fill, stats_O["NSE"])           
-            rsq_v_o = out.createVariable("Rsq_o", "f8", ("num_algos_o",), fill_value=fill)
+            rsq_v_o = out.createVariable("Rsq_o", "f8", ("num_algos",), fill_value=fill)
             rsq_v_o[:] = np.where(np.isclose(stats_O["Rsq"], empty), fill, stats_O["Rsq"])       
-            kge_v_o = out.createVariable("KGE_o", "f8", ("num_algos_o",), fill_value=fill)
-            kge_v_o[:] = np.where(np.isclose(stats_O["KGE"], empty), fill, stats_O["KGE"])
-            n_v_o = out.createVariable("testn_o", "f8", ("num_algos_o",), fill_value=fill)
-            n_v_o[:] = np.where(np.isclose(stats_O["n"], empty), fill, stats_O["n"])
-            rmse_v_o = out.createVariable("RMSE_o", "f8", ("num_algos_o",), fill_value=fill)
+            kge_v_o = out.createVariable("KGE_o", "f8", ("num_algos",), fill_value=fill)
+            kge_v_o[:] = np.where(np.isclose(stats_O["KGE"], empty), fill, stats_O["KGE"])          
+            rmse_v_o = out.createVariable("RMSE_o", "f8", ("num_algos",), fill_value=fill)
             rmse_v_o.units = "m^3/s"
             rmse_v_o[:] = np.where(np.isclose(stats_O["RMSE"], empty), fill, stats_O["RMSE"])
-            nrmse_v_o = out.createVariable("nRMSE_o", "f8", ("num_algos_o",), fill_value=fill)
+            n_v_o = out.createVariable("testn_o", "f8", ("num_algos",), fill_value=fill)
+            n_v_o[:] = np.where(np.isclose(stats_O["n"], empty), fill, stats_O["n"])
+            nrmse_v_o = out.createVariable("nRMSE_o", "f8", ("num_algos",), fill_value=fill)
             nrmse_v_o.units = "none"
             nrmse_v_o[:] = np.where(np.isclose(stats_O["nRMSE"], empty), fill, stats_O["nRMSE"])
-            nb_v_o = out.createVariable("nBIAS_o", "f8", ("num_algos_o",), fill_value=fill)
+            nb_v_o = out.createVariable("nBIAS_o", "f8", ("num_algos",), fill_value=fill)
             nb_v_o.units = "none"
             nb_v_o[:] = np.where(np.isclose(stats_O["nBIAS"], empty), fill, stats_O["nBIAS"])
         else:
-             #offline dimenstion
-            a_dim_o = out.createDimension("num_algos_o", 1)
-            c_dim_o = out.createDimension("nchar_o", 1)
-            t_dim_o = out.createDimension("time_o", 1)
-            t_v_o = out.createVariable("time_o", "i4", ("time_o",))
-            t_v_o.units = "days since Jan 1 Year 1"
-            t_v_o[:] = empty
-            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_o", "nchar_o"),)      
+            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos", "nchar_flpe"),)      
             a_v_o[:] = empty
-            gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos_o", "nchar_gage"), fill_value=fill)
+            gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos", "nchar_gage"), fill_value=fill)
             gid_v_o[:] = empty
-            r_v_o = out.createVariable("Spearmanr_o", "f8", ("num_algos_o",), fill_value=fill)
+            r_v_o = out.createVariable("Spearmanr_o", "f8", ("num_algos",), fill_value=fill)
             r_v_o[:] = empty           
-            sige_v_o = out.createVariable("SIGe_o", "f8", ("num_algos_o",), fill_value=fill)
+            sige_v_o = out.createVariable("SIGe_o", "f8", ("num_algos",), fill_value=fill)
             sige_v_o[:] = empty               
-            nse_v_o = out.createVariable("NSE_o", "f8", ("num_algos_o",), fill_value=fill)
+            nse_v_o = out.createVariable("NSE_o", "f8", ("num_algos",), fill_value=fill)
             nse_v_o[:] = empty           
-            rsq_v_o = out.createVariable("Rsq_o", "f8", ("num_algos_o",), fill_value=fill)
+            rsq_v_o = out.createVariable("Rsq_o", "f8", ("num_algos",), fill_value=fill)
             rsq_v_o[:] = empty    
-            kge_v_o = out.createVariable("KGE_o", "f8", ("num_algos_o",), fill_value=fill)
+            kge_v_o = out.createVariable("KGE_o", "f8", ("num_algos",), fill_value=fill)
             kge_v_o[:] = empty           
-            rmse_v_o = out.createVariable("RMSE_o", "f8", ("num_algos_o",), fill_value=fill)
+            rmse_v_o = out.createVariable("RMSE_o", "f8", ("num_algos",), fill_value=fill)
             rmse_v_o.units = "m^3/s"
             rmse_v_o[:] =empty
-            n_v_o = out.createVariable("testn_o", "f8", ("num_algos_o",), fill_value=fill)
+            n_v_o = out.createVariable("testn_o", "f8", ("num_algos",), fill_value=fill)
             n_v_o[:] =empty
-            nrmse_v_o = out.createVariable("nRMSE_o", "f8", ("num_algos_o",), fill_value=fill)
+            nrmse_v_o = out.createVariable("nRMSE_o", "f8", ("num_algos",), fill_value=fill)
             nrmse_v_o.units = "none"
             nrmse_v_o[:] =empty
-            nb_v_o = out.createVariable("nBIAS_o", "f8", ("num_algos_o",), fill_value=fill)
+            nb_v_o = out.createVariable("nBIAS_o", "f8", ("num_algos",), fill_value=fill)
             nb_v_o.units = "none"
-            nb_v_o[:] =empty        
+            nb_v_o[:] =empty   
 
         out.close()
 
