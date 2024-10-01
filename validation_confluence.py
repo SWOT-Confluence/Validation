@@ -32,17 +32,21 @@ import os
 from pathlib import Path
 import sys
 import warnings
+import matplotlib.pyplot as plt
+import seaborn as sb
 
 # Local imports
 from val.validation import stats
 from sos_read.sos_read import download_sos
 
 # Third-party imports
-from netCDF4 import Dataset, stringtochar
+from netCDF4 import Dataset, stringtochar,chartostring
 import numpy as np
 
 # Constants
 INPUT = Path("/mnt/data/input")
+FLPE=Path("/mnt/data/flpe")
+MOI=Path("/mnt/data/moi")
 OFFLINE = Path("/mnt/data/offline")
 OUTPUT = Path("/mnt/data/output")
 TMP_DIR = Path("/tmp")
@@ -80,6 +84,14 @@ class ValidationConfluence:
         check if offline data is only comprised of NaN values
     read_offline_data(reach_id)
         reads data from offline module and stores in flpe_data dictionary
+    is_flpe_valid(flpe_data)
+        check if flpe data is only comprised of NaN values
+    read_flpe_data(reach_id)
+        reads data from flpe module and stores in flpe_data dictionary
+    is_moi_valid(moi_data)
+        check if moi data is only comprised of NaN values
+    read_moi_data(reach_id)
+        reads data from moi module and stores in flpe_data dictionary
     read_time_data()
         read time of observations from SWOT files
     validate()
@@ -89,9 +101,9 @@ class ValidationConfluence:
     """
 
     INT_FILL = -999
-    NUM_ALGOS = 10
+    NUM_ALGOS = 14
 
-    def __init__(self, reach_data, offline_dir, input_dir, output_dir, run_type, gage_dir):
+    def __init__(self, reach_data, flpe_dir, moi_dir, offline_dir, input_dir, output_dir, run_type, gage_dir):
 
         """
         Parameters
@@ -100,7 +112,7 @@ class ValidationConfluence:
             dictionary of reach identifier and associated file names
         offline_dir: Path
             path to offline data directory
-        input_dir: Path
+        input_dir: Path 
             path to input directory
         output_dir: Path
             path to output directory
@@ -116,6 +128,8 @@ class ValidationConfluence:
         print('Processing', self.reach_id)
         self.gage_data = self.read_gage_data(gage_dir / reach_data["sos"])
         self.offline_data = self.read_offline_data(offline_dir)
+        self.flpe_data = self.read_flpe_data(flpe_dir)
+        self.moi_data = self.read_moi_data(moi_dir)
         self.output_dir = output_dir
 
 
@@ -220,8 +234,201 @@ class ValidationConfluence:
             gage_data["type"] = gage_type
             gage_data["q"] = gage[f"{gage_type}_q"][index][:].filled(np.nan)
             gage_data["qt"] = gage[f"{gage_type}_qt"][index][:].filled(self.INT_FILL).astype(int)
+            gage_data["gid"] = chartostring(gage[f"{gage_type}_id"][index][:].filled(np.nan))
+
             
-        return gage_data        
+        return gage_data
+    
+    def read_moi_data(self,moi_dir):
+        """Reads data from moi module and returns dictionary.
+        
+        Parameters
+        ----------
+        moi_dir: Path
+            path to moi data directory
+        
+        Returns
+        -------
+        dictionary of algorithm moi results
+        """
+       
+
+        moi_file = f"{moi_dir}/{self.reach_id}_integrator.nc"
+        moi = Dataset(moi_file, 'r')
+        moi_data = {}
+        moi_data["metroman"] =  moi["metroman/q"][:].filled(np.nan)
+        moi_data["neobam"] =  moi["neobam/q"][:].filled(np.nan)
+        moi_data["hivdi"] =  moi["hivdi/q"][:].filled(np.nan)
+        moi_data["momma"] =  moi["momma/q"][:].filled(np.nan)
+        moi_data["sad"] = moi["sad/q"][:].filled(np.nan)
+        moi_data["sic4dvar"] = moi["sic4dvar/q"][:].filled(np.nan)      
+        moi.close()      
+        
+        #create pre-offline consensus
+        ALLQ=np.full((len(moi_data.keys()), len(moi_data["metroman"])), np.nan)
+        for row in range(len(moi_data.keys())):
+            ALGv=moi_data[list(moi_data.keys())[row]]        
+            ALGv[ALGv<0]=np.nan
+            ALLQ[row,:]=ALGv
+
+        consensus=np.nanmedian(ALLQ,axis=0)
+        moi_data["consensus"]=consensus
+        
+        
+        if self.is_moi_valid(moi_data):
+            return moi_data
+        else: 
+            return {}
+    
+    def is_moi_valid(self, moi_data):
+        """Check if moi data is only comprised of NaN values.
+        
+        Returns
+        -------
+        False if all NaN values are present otherwise True
+        """
+        
+        invalid = 0
+        for v in moi_data.values():
+            if np.count_nonzero(~np.isnan(v)) == 0: invalid += 1
+        if invalid == self.NUM_ALGOS:
+            print('MOI IS NOT VALID')
+            return False
+        else:
+            return True
+        
+    def read_flpe_data(self,flpe_dir):
+        """Reads data from flpe module and returns dictionary.
+        
+        Parameters
+        ----------
+        flpe_dir: Path
+            path to flpe data directory
+        
+        Returns
+        -------
+        dictionary of algorithm moi results
+        """
+        convention_dict = {
+            "metroman":"average/allq",
+            "neobam":"q/q",
+            "hivdi":"reach/Q",
+            "momma":"Q",
+            "sad":"Qa",  
+            "sic4dvar":"Q_da",        
+            
+            
+        }
+
+        flpe_file_metroman = f"{flpe_dir}/{'metroman'}/{self.reach_id}_metroman.nc"
+        flpe_file_neobam = f"{flpe_dir}/{'geobam'}/{self.reach_id}_geobam.nc"
+        # flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_h2ivdi.nc"
+        flpe_file_momma = f"{flpe_dir}/{'momma'}/{self.reach_id}_momma.nc"
+        flpe_file_sad = f"{flpe_dir}/{'sad'}/{self.reach_id}_sad.nc"
+        flpe_file_sic4dvar = f"{flpe_dir}/{'sic4dvar'}/{self.reach_id}_sic4dvar.nc"
+        try:
+            flpe_mm = Dataset(flpe_file_metroman, 'r')
+        except:
+            flpe_mm=-9999
+        try:    
+            flpe_nb = Dataset(flpe_file_neobam, 'r')
+        except:
+            flpe_nb=-9999
+        try:
+            flpe_hi = Dataset(flpe_file_hivdi, 'r')
+        except:
+            flpe_hi=-9999
+        try:
+            flpe_mo = Dataset(flpe_file_momma, 'r')
+        except:
+            flpe_mo=-9999
+        try:
+            flpe_sa = Dataset(flpe_file_sad, 'r')
+        except:
+            flpe_sa=-9999
+        try:
+            flpe_si = Dataset(flpe_file_sic4dvar, 'r')
+        except:
+            flpe_si=-9999
+      
+        
+        flpe_data = {}
+        conlen = 0
+        
+        if flpe_mm==-9999:
+            flpe_data["metroman"]=-9999
+        else:
+            flpe_data["metroman"] =  flpe_mm[convention_dict["metroman"]][:].filled(np.nan)
+            conlen=len(flpe_data["metroman"])
+            flpe_mm.close()
+        if flpe_nb==-9999:
+            flpe_data["neobam"] =-9999
+        else:    
+            flpe_data["neobam"] =  flpe_nb[convention_dict["neobam"]][:].filled(np.nan)
+            conlen=len(flpe_data["neobam"])
+            flpe_nb.close()
+        if flpe_hi ==-9999:
+            flpe_data["hivdi"] =-9999
+        else:
+            flpe_data["hivdi"] =  flpe_hi[convention_dict["hivdi"]][:].filled(np.nan)
+            conlen=len(flpe_data["hivdi"])
+            flpe_hi.close()
+        if  flpe_mo==-9999:
+            flpe_data["momma"]=-9999
+        else:            
+            flpe_data["momma"] =  flpe_mo[convention_dict["momma"]][:].filled(np.nan)
+            conlen=len(flpe_data["momma"])
+            flpe_mo.close()
+        if flpe_sa==-9999:
+            flpe_data["sad"]=-9999
+        else:
+            flpe_data["sad"] = flpe_sa[convention_dict["sad"]][:].filled(np.nan)
+            conlen=len(flpe_data["sad"])
+            flpe_sa.close()
+        if flpe_si==-9999:
+            flpe_data["sic4dvar"]=-9999
+        else:
+            flpe_data["sic4dvar"] = flpe_si[convention_dict["sic4dvar"]][:].filled(np.nan)
+            conlen=len(flpe_data["sic4dvar"])
+            flpe_si.close()
+
+        if conlen > 0:
+            #create pre-offline consensus
+            ALLQ=np.full((len(flpe_data.keys()),  conlen), np.nan)
+            for row in range(len(flpe_data.keys())):
+                ALGv=flpe_data[list(flpe_data.keys())[row]]
+                if np.size(ALGv)==conlen:
+                    ALGv[ALGv<0]=np.nan
+                    ALLQ[row,:]=ALGv
+                
+
+            consensus=np.nanmedian(ALLQ,axis=0)
+            flpe_data["consensus"]=consensus
+            
+            
+            if self.is_flpe_valid(flpe_data):
+                return flpe_data
+            else: 
+                return {}
+        else:
+            return {}
+    
+    def is_flpe_valid(self, flpe_data):
+        """Check if moi data is only comprised of NaN values.
+        
+        Returns
+        -------
+        False if all NaN values are present otherwise True
+        """
+        
+        invalid = 0
+        for v in flpe_data.values():
+            if np.count_nonzero(~np.isnan(v)) == 0: invalid += 1
+        if invalid == self.NUM_ALGOS:
+            print('flpe IS NOT VALID')
+            return False
+        else:
+            return True                
 
     def read_offline_data(self, offline_dir):
         """Reads data from offline module and returns dictionary.
@@ -232,7 +439,7 @@ class ValidationConfluence:
             path to offline data directory
         
         Returns
-        -------
+        -------ff
         dictionary of algorithm offline results
         """
         convention_dict = {
@@ -319,36 +526,110 @@ class ValidationConfluence:
                 ordinal_times.append((epoch + datetime.timedelta(seconds=t)).toordinal())
             except:
                 ordinal_times.append(np.nan)
-                print(time)
+                #print(time)
                 warnings.warn('problem with time conversion to ordinal, most likely nan value')
         # return [ (epoch + datetime.timedelta(seconds=t)).toordinal() for t in time ]   # Check if this format works
         return ordinal_times
 
     def validate(self):
         """Run validation operations on gage data and FLPE data; write stats."""
-        
+     
         # SWOT time 
         time = self.read_time_data()
-
+        algo_dim = int(self.NUM_ALGOS/2)
         # Data fill values
-        data = {
-            "algorithm": np.full((self.NUM_ALGOS), fill_value=""),
-            "NSE": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "Rsq": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "KGE": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "RMSE": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "n": np.full((self.NUM_ALGOS), fill_value=-9999),
-            "nRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),
-            "nBIAS":np.full((self.NUM_ALGOS), fill_value=-9999),
-            "rRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),
+        data_flpe = {
+            "algorithm": np.full( algo_dim, fill_value=""),
+            "Gid": np.full(algo_dim, fill_value=""),
+            "Spearmanr": np.full(algo_dim, fill_value=-9999),
+            "SIGe": np.full(algo_dim, fill_value=-9999),
+            "NSE": np.full(algo_dim, fill_value=-9999),           
+            "Rsq": np.full(algo_dim, fill_value=-9999),
+            "KGE": np.full(algo_dim, fill_value=-9999),           
+            "RMSE": np.full(algo_dim, fill_value=-9999),           
+            "n": np.full(algo_dim, fill_value=-9999),           
+            "nRMSE":np.full(algo_dim, fill_value=-9999),           
+            "nBIAS":np.full(algo_dim, fill_value=-9999),
+            "t":np.full((self.NUM_ALGOS), fill_value=-9999),
+
+            
+           
         }
+
+        no_flpe = False
+        # Check if there is data to validate
+        if self.gage_data:
+            if self.flpe_data:
+                #### Check should go here for all nan gauge data ---------------------------------
+                data_flpe = stats(time, self.flpe_data, self.gage_data["qt"], 
+                            self.gage_data["q"],self.gage_data["gid"], str(self.reach_id), 
+                            self.output_dir / "figs")
+            else:
+                warnings.warn('No flpe data found...')
+                no_flpe = True
+        else:
+            warnings.warn('No gauge found for reach...')
+
+        
+       
+        data_moi = {
+
+            "algorithm": np.full( algo_dim, fill_value=""),
+            "Gid": np.full( algo_dim, fill_value=""),
+            "Spearmanr": np.full( algo_dim, fill_value=-9999),
+            "SIGe": np.full( algo_dim, fill_value=-9999),
+            "NSE": np.full( algo_dim, fill_value=-9999),           
+            "Rsq": np.full( algo_dim, fill_value=-9999),
+            "KGE": np.full( algo_dim, fill_value=-9999),           
+            "RMSE": np.full( algo_dim, fill_value=-9999),           
+            "n": np.full( algo_dim, fill_value=-9999),           
+            "nRMSE":np.full( algo_dim, fill_value=-9999),           
+            "nBIAS":np.full( algo_dim, fill_value=-9999),
+             "t":np.full((self.NUM_ALGOS), fill_value=-9999),
+
+        }
+
+        no_moi = False
+        # Check if there is data to validate
+        if self.gage_data:
+            if self.moi_data:
+                #### Check should go here for all nan gauge data ---------------------------------
+                data_moi = stats(time, self.moi_data, self.gage_data["qt"], 
+                            self.gage_data["q"],self.gage_data["gid"], str(self.reach_id), 
+
+                            self.output_dir / "figs")
+            else:
+                warnings.warn('No moi data found...')
+                no_moi = True
+        else:
+            warnings.warn('No gauge found for reach...')
+
+        
+
+        data_O = {
+            "algorithm": np.full((self.NUM_ALGOS), fill_value=""),
+            "Gid": np.full((self.NUM_ALGOS), fill_value=""),
+            "Spearmanr": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "SIGe": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "NSE": np.full((self.NUM_ALGOS), fill_value=-9999),           
+            "Rsq": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "KGE": np.full((self.NUM_ALGOS), fill_value=-9999),           
+            "RMSE": np.full((self.NUM_ALGOS), fill_value=-9999),           
+            "n": np.full((self.NUM_ALGOS), fill_value=-9999),           
+            "nRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),           
+            "nBIAS":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "t":np.full((self.NUM_ALGOS), fill_value=-9999),
+
+            
+        }
+        
         no_offline = False
         # Check if there is data to validate
         if self.gage_data:
             if self.offline_data:
                 #### Check should go here for all nan gauge data ---------------------------------
-                data = stats(time, self.offline_data, self.gage_data["qt"], 
-                            self.gage_data["q"], str(self.reach_id), 
+                data_O = stats(time, self.offline_data, self.gage_data["qt"], 
+                            self.gage_data["q"],  self.gage_data["gid"], str(self.reach_id), 
                             self.output_dir / "figs")
             else:
                 warnings.warn('No offline data found...')
@@ -357,18 +638,28 @@ class ValidationConfluence:
             warnings.warn('No gauge found for reach...')
             
         # Write out valid or invalid data
-        gage_type = "No data" if not self.gage_data else self.gage_data["type"]
+        gage_type = "No data" if not self.gage_data else self.gage_data["type"]       
+        ALLnone=np.all([no_flpe,no_moi,no_offline])
+       
+        if (gage_type != "No data") and (ALLnone != True):
+            self.write(data_flpe,data_moi,data_O, self.reach_id, gage_type,[no_flpe,no_moi,no_offline])
 
-        if (gage_type != "No data") and (no_offline != True):
-            self.write(data, self.reach_id, gage_type)
+    def write(self, stats_flpe,stats_moi,stats_O, reach_id, gage_type,GO):
+        FLPEno=GO[0]
+        MOIno=GO[1]
+        OFFno=GO[2]
+        #print(stats_flpe)
 
-    def write(self, stats, reach_id, gage_type):
         """Write stats to NetCDF file.
         
         Parameters
         ----------
-        stats: dict
-            dictionary of stats for each algorithm
+        stats_flpe: dict
+            dictionary of flpe stats for each algorithm
+        stats_moi: dict
+            dictionary of moi stats for each algorithm
+        stats_O: dict
+            dictionary of offline stats for each algorithm
         reach_id: int
             reach identifier for stats
         gage_type: str
@@ -382,50 +673,190 @@ class ValidationConfluence:
         out.reach_id = reach_id
         out.description = f"Statistics for reach: {reach_id}"
         out.history = datetime.datetime.now().strftime('%d-%b-%Y %H:%M:%S')
-        out.has_validation = 0 if np.where(stats["algorithm"] == "")[0].size == self.NUM_ALGOS else 1
+        out.has_validation_flpe = 0 if np.where(stats_flpe["algorithm"] == "")[0].size == self.NUM_ALGOS/2 else 1
+        out.has_validation_moi = 0 if np.where(stats_moi["algorithm"] == "")[0].size == self.NUM_ALGOS/2 else 1
+        out.has_validation_o = 0 if np.where(stats_O["algorithm"] == "")[0].size == self.NUM_ALGOS else 1
         out.gage_type = gage_type.upper()
-
+        #generate uniform dimensions here
+        #one set of dimentions
         a_dim = out.createDimension("num_algos", None)
-        c_dim = out.createDimension("nchar", None)
-        t_dim = out.createDimension("time", len(stats["t"]))
-        t_v = out.createVariable("time", "i4", ("time",))
-        t_v.units = "days since Jan 1 Year 1"
-        t_v[:] = stats["t"]
+        c_dim_flpe = out.createDimension("nchar_flpe", None)
+        c_dim_gage = out.createDimension("nchar_gage", None)
+        t_dim = out.createDimension("time", len(stats_flpe["t"]))
+        t_v_flpe = out.createVariable("time", "i4", ("time",))
+        t_v_flpe.units = "days since Jan 1 Year 1"       
+        t_v_flpe[:] = stats_flpe["t"]
 
-        a_v = out.createVariable("algorithm", 'S1', ("num_algos", "nchar"),)
-        a_v[:] = stringtochar(stats["algorithm"][0].astype("S16"))
+        if FLPEno== False:    
+            a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos", "nchar_flpe"),)        
+            a_v_flpe[:] = stringtochar(stats_flpe["algorithm"][0].astype("S16"))
+           
+            gid_v_flpe = out.createVariable("gageID_flpe", "S1", ("num_algos", "nchar_gage"), fill_value=fill)
+            gid_v_flpe[:] = stringtochar(stats_flpe["Gid"][:].astype("S16"))
+            r_v_flpe = out.createVariable("Spearmanr_flpe", "f8", ("num_algos",), fill_value=fill)
+            r_v_flpe[:] = np.where(np.isclose(stats_flpe["Spearmanr"], empty), fill, stats_flpe["Spearmanr"])
+            sige_v_flpe = out.createVariable("SIGe_flpe", "f8", ("num_algos",), fill_value=fill)
+            sige_v_flpe[:] = np.where(np.isclose(stats_flpe["SIGe"], empty), fill, stats_flpe["SIGe"])
+            nse_v_flpe = out.createVariable("NSE_flpe", "f8", ("num_algos",), fill_value=fill)
+            nse_v_flpe[:] = np.where(np.isclose(stats_flpe["NSE"], empty), fill, stats_flpe["NSE"])
+            rsq_v_flpe = out.createVariable("Rsq_flpe", "f8", ("num_algos",), fill_value=fill)
+            rsq_v_flpe[:] = np.where(np.isclose(stats_flpe["Rsq"], empty), fill, stats_flpe["Rsq"])       
+            kge_v_flpe = out.createVariable("KGE_flpe", "f8", ("num_algos",), fill_value=fill)
+            kge_v_flpe[:] = np.where(np.isclose(stats_flpe["KGE"], empty), fill, stats_flpe["KGE"])
+            rmse_v_flpe = out.createVariable("RMSE_flpe", "f8", ("num_algos",), fill_value=fill)
+            rmse_v_flpe.units = "m^3/s"
+            rmse_v_flpe[:] = np.where(np.isclose(stats_flpe["RMSE"], empty), fill, stats_flpe["RMSE"])
+            n_v_flpe = out.createVariable("testn_flpe", "f8", ("num_algos",), fill_value=fill)
+            n_v_flpe[:] = np.where(np.isclose(stats_flpe["n"], empty), fill, stats_flpe["n"])
+            nrmse_v_flpe = out.createVariable("nRMSE_flpe", "f8", ("num_algos",), fill_value=fill)
+            nrmse_v_flpe.units = "none"
+            nrmse_v_flpe[:] = np.where(np.isclose(stats_flpe["nRMSE"], empty), fill, stats_flpe["nRMSE"])
+            nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos",), fill_value=fill)
+            nb_v_flpe.units = "none"
+            nb_v_flpe[:] = np.where(np.isclose(stats_flpe["nBIAS"], empty), fill, stats_flpe["nBIAS"])
+        else:
+            a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos", "nchar_flpe"),)        
+            a_v_flpe[:] = empty
+           
+            gid_v_flpe = out.createVariable("gageID_flpe", "S1", ("num_algos", "nchar_gage"), fill_value=fill)
+            gid_v_flpe[:] = empty
+            r_v_flpe = out.createVariable("Spearmanr_flpe", "f8", ("num_algos",), fill_value=fill)
+            r_v_flpe[:] = empty
+            sige_v_flpe = out.createVariable("SIGe_flpe", "f8", ("num_algos",), fill_value=fill)
+            sige_v_flpe[:] = empty
+            nse_v_flpe = out.createVariable("NSE_flpe", "f8", ("num_algos",), fill_value=fill)
+            nse_v_flpe[:] =empty
+            rsq_v_flpe = out.createVariable("Rsq_flpe", "f8", ("num_algos",), fill_value=fill)
+            rsq_v_flpe[:] = empty       
+            kge_v_flpe = out.createVariable("KGE_flpe", "f8", ("num_algos",), fill_value=fill)
+            kge_v_flpe[:] = empty
+            rmse_v_flpe = out.createVariable("RMSE_flpe", "f8", ("num_algos",), fill_value=fill)
+            rmse_v_flpe.units = "m^3/s"
+            rmse_v_flpe[:] = empty
+            n_v_flpe = out.createVariable("testn_flpe", "f8", ("num_algos",), fill_value=fill)
+            n_v_flpe[:] = empty
+            nrmse_v_flpe = out.createVariable("nRMSE_flpe", "f8", ("num_algos",), fill_value=fill)
+            nrmse_v_flpe.units = "none"
+            nrmse_v_flpe[:] = empty
+            nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos",), fill_value=fill)
+            nb_v_flpe.units = "none"
+            nb_v_flpe[:] = empty
+       
+       
+       
+       
+        if MOIno== False:
+            a_v_moi = out.createVariable("algorithm_moi", 'S1', ("num_algos", "nchar_flpe"),)
+            a_v_moi[:] = stringtochar(stats_moi["algorithm"][0].astype("S16"))
+            gid_v_moi = out.createVariable("gageID_moi", "S1", ("num_algos", "nchar_gage"), fill_value=fill)
+            gid_v_moi[:] = stringtochar(stats_moi["Gid"][:].astype("S16"))
+            r_v_moi = out.createVariable("Spearmanr_moi", "f8", ("num_algos",), fill_value=fill)
+            r_v_moi[:] = np.where(np.isclose(stats_moi["Spearmanr"], empty), fill, stats_moi["Spearmanr"])            
+            sige_v_moi = out.createVariable("SIGe_moi", "f8", ("num_algos",), fill_value=fill)
+            sige_v_moi[:] = np.where(np.isclose(stats_moi["SIGe"], empty), fill, stats_moi["SIGe"])        
+            nse_v_moi = out.createVariable("NSE_moi", "f8", ("num_algos",), fill_value=fill)
+            nse_v_moi[:] = np.where(np.isclose(stats_moi["NSE"], empty), fill, stats_moi["NSE"])       
+            rsq_v_moi = out.createVariable("Rsq_moi", "f8", ("num_algos",), fill_value=fill)
+            rsq_v_moi[:] = np.where(np.isclose(stats_moi["Rsq"], empty), fill, stats_moi["Rsq"])                       
+            kge_v_moi = out.createVariable("KGE_moi", "f8", ("num_algos",), fill_value=fill)
+            kge_v_moi[:] = np.where(np.isclose(stats_moi["KGE"], empty), fill, stats_moi["KGE"])
+            rmse_v_moi = out.createVariable("RMSE_moi", "f8", ("num_algos",), fill_value=fill)
+            rmse_v_moi.units = "m^3/s"
+            rmse_v_moi[:] = np.where(np.isclose(stats_moi["RMSE"], empty), fill, stats_moi["RMSE"])
+            n_v_moi = out.createVariable("testn_moi", "f8", ("num_algos",), fill_value=fill)
+            n_v_moi[:] = np.where(np.isclose(stats_moi["n"], empty), fill, stats_moi["n"])
+            nrmse_v_moi = out.createVariable("nRMSE_moi", "f8", ("num_algos",), fill_value=fill)
+            nrmse_v_moi.units = "none"
+            nrmse_v_moi[:] = np.where(np.isclose(stats_moi["nRMSE"], empty), fill, stats_moi["nRMSE"])
+            nb_v_moi = out.createVariable("nBIAS_moi", "f8", ("num_algos",), fill_value=fill)
+            nb_v_moi.units = "none"
+            nb_v_moi[:] = np.where(np.isclose(stats_moi["nBIAS"], empty), fill, stats_moi["nBIAS"])
+        else:
+            a_v_moi = out.createVariable("algorithm_moi", 'S1', ("num_algos", "nchar_flpe"),)
+            a_v_moi[:] =  empty
+            gid_v_moi = out.createVariable("gageID_moi", "S1", ("num_algos", "nchar_gage"), fill_value=fill)
+            gid_v_moi[:] =  empty
+            r_v_moi = out.createVariable("Spearmanr_moi", "f8", ("num_algos",), fill_value=fill)
+            r_v_moi[:] =  empty          
+            sige_v_moi = out.createVariable("SIGe_moi", "f8", ("num_algos",), fill_value=fill)
+            sige_v_moi[:] =  empty       
+            nse_v_moi = out.createVariable("NSE_moi", "f8", ("num_algos",), fill_value=fill)
+            nse_v_moi[:] =  empty    
+            rsq_v_moi = out.createVariable("Rsq_moi", "f8", ("num_algos",), fill_value=fill)
+            rsq_v_moi[:] = empty                       
+            kge_v_moi = out.createVariable("KGE_moi", "f8", ("num_algos",), fill_value=fill)
+            kge_v_moi[:] = empty
+            rmse_v_moi = out.createVariable("RMSE_moi", "f8", ("num_algos",), fill_value=fill)
+            rmse_v_moi.units = "m^3/s"
+            rmse_v_moi[:] =  empty
+            n_v_moi = out.createVariable("testn_moi", "f8", ("num_algos",), fill_value=fill)
+            n_v_moi[:] = np.where(np.isclose(stats_moi["n"], empty), fill, stats_moi["n"])
+            nrmse_v_moi = out.createVariable("nRMSE_moi", "f8", ("num_algos",), fill_value=fill)
+            nrmse_v_moi.units = "none"
+            nrmse_v_moi[:] =  empty
+            nb_v_moi = out.createVariable("nBIAS_moi", "f8", ("num_algos",), fill_value=fill)
+            nb_v_moi.units = "none"
+            nb_v_moi[:] =  empty
+       
+     
         
-        nse_v = out.createVariable("NSE", "f8", ("num_algos",), fill_value=fill)
-        nse_v[:] = np.where(np.isclose(stats["NSE"], empty), fill, stats["NSE"])
-
-        rsq_v = out.createVariable("Rsq", "f8", ("num_algos",), fill_value=fill)
-        rsq_v[:] = np.where(np.isclose(stats["Rsq"], empty), fill, stats["Rsq"])
-
-        kge_v = out.createVariable("KGE", "f8", ("num_algos",), fill_value=fill)
-        kge_v[:] = np.where(np.isclose(stats["KGE"], empty), fill, stats["KGE"])
-
-        rmse_v = out.createVariable("RMSE", "f8", ("num_algos",), fill_value=fill)
-        rmse_v.units = "m^3/s"
-        rmse_v[:] = np.where(np.isclose(stats["RMSE"], empty), fill, stats["RMSE"])
-        
-        nrmse_v = out.createVariable("nRMSE", "f8", ("num_algos",), fill_value=fill)
-        nrmse_v.units = "none"
-        nrmse_v[:] = np.where(np.isclose(stats["nRMSE"], empty), fill, stats["nRMSE"])
-        
-        nb_v = out.createVariable("nBIAS", "f8", ("num_algos",), fill_value=fill)
-        nb_v.units = "none"
-        nb_v[:] = np.where(np.isclose(stats["nBIAS"], empty), fill, stats["nBIAS"])
-        
-        rrmse_v = out.createVariable("rRMSE", "f8", ("num_algos",), fill_value=fill)
-        rrmse_v.units = "none"
-        rrmse_v[:] = np.where(np.isclose(stats["rRMSE"], empty), fill, stats["rRMSE"])
-
-        n_v = out.createVariable("testn", "f8", ("num_algos",), fill_value=fill)
-        n_v[:] = np.where(np.isclose(stats["n"], empty), fill, stats["n"])
+         
+        if OFFno== False:
+            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos", "nchar_flpe"),)      
+            a_v_o[:] = stringtochar(stats_O["algorithm"][0].astype("S16"))
+            gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos", "nchar_gage"), fill_value=fill)
+            gid_v_o[:] = stringtochar(stats_O["Gid"][:].astype("S16"))
+            r_v_o = out.createVariable("Spearmanr_o", "f8", ("num_algos",), fill_value=fill)
+            r_v_o[:] = np.where(np.isclose(stats_O["Spearmanr"], empty), fill, stats_O["Spearmanr"])                  
+            sige_v_o = out.createVariable("SIGe_o", "f8", ("num_algos",), fill_value=fill)
+            sige_v_o[:] = np.where(np.isclose(stats_O["SIGe"], empty), fill, stats_O["SIGe"])                
+            nse_v_o = out.createVariable("NSE_o", "f8", ("num_algos",), fill_value=fill)
+            nse_v_o[:] = np.where(np.isclose(stats_O["NSE"], empty), fill, stats_O["NSE"])           
+            rsq_v_o = out.createVariable("Rsq_o", "f8", ("num_algos",), fill_value=fill)
+            rsq_v_o[:] = np.where(np.isclose(stats_O["Rsq"], empty), fill, stats_O["Rsq"])       
+            kge_v_o = out.createVariable("KGE_o", "f8", ("num_algos",), fill_value=fill)
+            kge_v_o[:] = np.where(np.isclose(stats_O["KGE"], empty), fill, stats_O["KGE"])          
+            rmse_v_o = out.createVariable("RMSE_o", "f8", ("num_algos",), fill_value=fill)
+            rmse_v_o.units = "m^3/s"
+            rmse_v_o[:] = np.where(np.isclose(stats_O["RMSE"], empty), fill, stats_O["RMSE"])
+            n_v_o = out.createVariable("testn_o", "f8", ("num_algos",), fill_value=fill)
+            n_v_o[:] = np.where(np.isclose(stats_O["n"], empty), fill, stats_O["n"])
+            nrmse_v_o = out.createVariable("nRMSE_o", "f8", ("num_algos",), fill_value=fill)
+            nrmse_v_o.units = "none"
+            nrmse_v_o[:] = np.where(np.isclose(stats_O["nRMSE"], empty), fill, stats_O["nRMSE"])
+            nb_v_o = out.createVariable("nBIAS_o", "f8", ("num_algos",), fill_value=fill)
+            nb_v_o.units = "none"
+            nb_v_o[:] = np.where(np.isclose(stats_O["nBIAS"], empty), fill, stats_O["nBIAS"])
+        else:
+            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos", "nchar_flpe"),)      
+            a_v_o[:] = empty
+            gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos", "nchar_gage"), fill_value=fill)
+            gid_v_o[:] = empty
+            r_v_o = out.createVariable("Spearmanr_o", "f8", ("num_algos",), fill_value=fill)
+            r_v_o[:] = empty           
+            sige_v_o = out.createVariable("SIGe_o", "f8", ("num_algos",), fill_value=fill)
+            sige_v_o[:] = empty               
+            nse_v_o = out.createVariable("NSE_o", "f8", ("num_algos",), fill_value=fill)
+            nse_v_o[:] = empty           
+            rsq_v_o = out.createVariable("Rsq_o", "f8", ("num_algos",), fill_value=fill)
+            rsq_v_o[:] = empty    
+            kge_v_o = out.createVariable("KGE_o", "f8", ("num_algos",), fill_value=fill)
+            kge_v_o[:] = empty           
+            rmse_v_o = out.createVariable("RMSE_o", "f8", ("num_algos",), fill_value=fill)
+            rmse_v_o.units = "m^3/s"
+            rmse_v_o[:] =empty
+            n_v_o = out.createVariable("testn_o", "f8", ("num_algos",), fill_value=fill)
+            n_v_o[:] =empty
+            nrmse_v_o = out.createVariable("nRMSE_o", "f8", ("num_algos",), fill_value=fill)
+            nrmse_v_o.units = "none"
+            nrmse_v_o[:] =empty
+            nb_v_o = out.createVariable("nBIAS_o", "f8", ("num_algos",), fill_value=fill)
+            nb_v_o.units = "none"
+            nb_v_o[:] =empty   
 
         out.close()
 
-def get_reach_data(input_json,index_to_run,sos_bucket):
+def get_reach_data(input_json, index_to_run, sos_bucket):
         """Retrun dictionary of reach data.
         
         Parameters
@@ -495,14 +926,14 @@ def run_validation():
     print('run_type: ', run_type)
     print('sos_bucket: ', sos_bucket)
 
-    reach_data = get_reach_data(reach_json,index_to_run,sos_bucket)
+    reach_data = get_reach_data(reach_json, index_to_run, sos_bucket)
 
     if sos_bucket:
         gage_dir = TMP_DIR
     else:
         gage_dir = INPUT_DIR.joinpath("sos")
 
-    vc = ValidationConfluence(reach_data, OFFLINE, INPUT, OUTPUT, run_type, gage_dir)
+    vc = ValidationConfluence(reach_data, FLPE, MOI, OFFLINE, INPUT, OUTPUT, run_type, gage_dir)
     vc.validate()
 
 if __name__ == "__main__": 
