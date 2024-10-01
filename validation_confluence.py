@@ -510,7 +510,7 @@ class ValidationConfluence:
         list of ordinal times
         """
 
-        swot = Dataset(self.input_dir / "GOOD_DOMAIN_1_SWOT" / f"{self.reach_id}_SWOT.nc", 'r')
+        swot = Dataset(self.input_dir / "swot" / f"{self.reach_id}_SWOT.nc", 'r')
         time = swot["reach"]["time"][:].filled(np.nan)
         swot.close()
         epoch = datetime.datetime(2000,1,1,0,0,0)
