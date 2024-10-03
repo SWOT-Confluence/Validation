@@ -30,6 +30,14 @@ data "aws_efs_file_system" "aws_efs_input" {
   creation_token = "${var.prefix}-input"
 }
 
+data "aws_efs_file_system" "aws_efs_flpe" {
+  creation_token = "${var.prefix}-flpe"
+}
+
+data "aws_efs_file_system" "aws_efs_moi" {
+  creation_token = "${var.prefix}-moi"
+}
+
 data "aws_efs_file_system" "aws_efs_offline" {
   creation_token = "${var.prefix}-offline"
 }

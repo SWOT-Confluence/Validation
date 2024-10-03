@@ -26,6 +26,16 @@ resource "aws_batch_job_definition" "generate_batch_jd_validation" {
         "readOnly": true
       },
       {
+        "sourceVolume": "flpe",
+        "containerPath": "/mnt/data/flpe",
+        "readOnly": false
+      },
+      {
+        "sourceVolume": "moi",
+        "containerPath": "/mnt/data/moi",
+        "readOnly": false
+      },
+      {
         "sourceVolume": "offline",
         "containerPath": "/mnt/data/offline",
         "readOnly": true
@@ -41,6 +51,20 @@ resource "aws_batch_job_definition" "generate_batch_jd_validation" {
         "name": "input",
         "efsVolumeConfiguration": {
           "fileSystemId": "${data.aws_efs_file_system.aws_efs_input.file_system_id}",
+          "rootDirectory": "/"
+        }
+      },
+      {
+        "name": "flpe",
+        "efsVolumeConfiguration": {
+          "fileSystemId": "${data.aws_efs_file_system.aws_efs_flpe.file_system_id}",
+          "rootDirectory": "/"
+        }
+      },
+      {
+        "name": "moi",
+        "efsVolumeConfiguration": {
+          "fileSystemId": "${data.aws_efs_file_system.aws_efs_moi.file_system_id}",
           "rootDirectory": "/"
         }
       },
