@@ -718,6 +718,9 @@ class ValidationConfluence:
             nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos",), fill_value=fill)
             nb_v_flpe.units = "none"
             nb_v_flpe[:] = np.where(np.isclose(stats_flpe["nBIAS"], empty), fill, stats_flpe["nBIAS"])
+            consensus_flpe = out.createVariable("consensus_flpe", "f8", ("time",), fill_value=fill)
+            consensus_flpe.units = "m^3/s"
+            consensus_flpe[:] = np.where(np.isclose(stats_flpe["consensus"], empty), fill, stats_flpe["consensus"])
         else:
             a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos", "nchar_flpe"),)        
             a_v_flpe[:] = empty
@@ -745,6 +748,11 @@ class ValidationConfluence:
             nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos",), fill_value=fill)
             nb_v_flpe.units = "none"
             nb_v_flpe[:] = empty
+            consensus_flpe = out.createVariable("consensus_flpe", "f8", ("time",), fill_value=fill)
+            consensus_flpe.units = "m^3/s"
+            consensus_flpe[:] =empty
+
+        
        
        
        
