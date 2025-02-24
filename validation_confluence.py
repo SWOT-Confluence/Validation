@@ -537,6 +537,7 @@ class ValidationConfluence:
         # SWOT time 
         time = self.read_time_data()
         algo_dim = int(self.NUM_ALGOS/2)
+        Tdim=len(time)
         # Data fill values
         data_flpe = {
             "algorithm": np.full( algo_dim, fill_value=""),
@@ -551,6 +552,7 @@ class ValidationConfluence:
             "nRMSE":np.full(algo_dim, fill_value=-9999),           
             "nBIAS":np.full(algo_dim, fill_value=-9999),
             "t":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "consensus":np.full(Tdim, fill_value=-9999),
 
             
            
@@ -586,6 +588,7 @@ class ValidationConfluence:
             "nRMSE":np.full( algo_dim, fill_value=-9999),           
             "nBIAS":np.full( algo_dim, fill_value=-9999),
              "t":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "consensus":np.full(Tdim, fill_value=-9999),
 
         }
 
@@ -619,6 +622,7 @@ class ValidationConfluence:
             "nRMSE":np.full((self.NUM_ALGOS), fill_value=-9999),           
             "nBIAS":np.full((self.NUM_ALGOS), fill_value=-9999),
             "t":np.full((self.NUM_ALGOS), fill_value=-9999),
+            "consensus":np.full(Tdim, fill_value=-9999),
 
             
         }
@@ -714,6 +718,9 @@ class ValidationConfluence:
             nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos",), fill_value=fill)
             nb_v_flpe.units = "none"
             nb_v_flpe[:] = np.where(np.isclose(stats_flpe["nBIAS"], empty), fill, stats_flpe["nBIAS"])
+            consensus_flpe = out.createVariable("consensus_flpe", "f8", ("time",), fill_value=fill)
+            consensus_flpe.units = "m^3/s"
+            consensus_flpe[:] = np.where(np.isclose(stats_flpe["consensus"], empty), fill, stats_flpe["consensus"])
         else:
             a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos", "nchar_flpe"),)        
             a_v_flpe[:] = empty
@@ -741,6 +748,11 @@ class ValidationConfluence:
             nb_v_flpe = out.createVariable("nBIAS_flpe", "f8", ("num_algos",), fill_value=fill)
             nb_v_flpe.units = "none"
             nb_v_flpe[:] = empty
+            consensus_flpe = out.createVariable("consensus_flpe", "f8", ("time",), fill_value=fill)
+            consensus_flpe.units = "m^3/s"
+            consensus_flpe[:] =empty
+
+        
        
        
        

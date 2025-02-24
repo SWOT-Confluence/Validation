@@ -31,7 +31,10 @@ def stats(St,Sq_,Vt,Vq,gid,IDstr,figdir):
     STST=[]
     for algo in Sq_:
         print(algo)
-       
+        if algo =='consensus':
+            OUTconsensus=Sq_[algo]
+        else:
+           OUTconsensus=EMPTY
        
         Sq=Sq_[algo]
         if np.size(Sq)>3:#this will prevent failures on filled algo data         
@@ -167,7 +170,8 @@ def stats(St,Sq_,Vt,Vq,gid,IDstr,figdir):
         "nRMSE":nRMSEo[:],
         "nBIAS":nBIASo[:],            
         "n":no[:],
-        "t": St
+        "t": St,
+        "consensus":OUTconsensus
         }
    
     return  validout
