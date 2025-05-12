@@ -9,6 +9,7 @@ variable "app_version" {
   description = "The application version number"
 }
 
+
 variable "aws_region" {
   type        = string
   description = "AWS region to deploy to"
