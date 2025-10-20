@@ -16,8 +16,8 @@ variable "aws_region" {
 }
 
 variable "default_tags" {
-  type    = map(string)
-  default = {}
+  type        = map(string)
+  default     = {}
 }
 
 variable "environment" {
