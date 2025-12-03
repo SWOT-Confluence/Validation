@@ -37,7 +37,7 @@ import seaborn as sb
 
 # Local imports
 from val.validation import stats
-#from sos_read.sos_read import download_sos
+from sos_read.sos_read import download_sos #this import does not work on a singularity container adn must be commented out to run offline
 
 # Third-party imports
 from netCDF4 import Dataset, stringtochar,chartostring
@@ -962,7 +962,8 @@ def run_validation():
     if sos_bucket:
         gage_dir = TMP_DIR
     else:
-        gage_dir = INPUT_DIR.joinpath("sos")
+        #gage_dir = INPUT_DIR.joinpath("sos")
+        gage_dir = INPUT.joinpath("sos")
 
     vc = ValidationConfluence(reach_data, FLPE, MOI, OFFLINE, INPUT, OUTPUT, run_type, gage_dir)
     vc.validate()
