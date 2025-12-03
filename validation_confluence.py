@@ -315,17 +315,19 @@ class ValidationConfluence:
             "hivdi":"reach/Q",
             "momma":"Q",
             "sad":"Qa",  
-            "sic4dvar":"Q_da",        
+            "sic4dvar":"Q_da",
+            "consensus":"consensus_q",        
             
             
         }
 
         flpe_file_metroman = f"{flpe_dir}/{'metroman'}/{self.reach_id}_metroman.nc"
         flpe_file_neobam = f"{flpe_dir}/{'geobam'}/{self.reach_id}_geobam.nc"
-        # flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_h2ivdi.nc"
+        flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_h2ivdi.nc"
         flpe_file_momma = f"{flpe_dir}/{'momma'}/{self.reach_id}_momma.nc"
         flpe_file_sad = f"{flpe_dir}/{'sad'}/{self.reach_id}_sad.nc"
         flpe_file_sic4dvar = f"{flpe_dir}/{'sic4dvar'}/{self.reach_id}_sic4dvar.nc"
+        flpe_file_consensus = f"{flpe_dir}/{'consensus'}/{self.reach_id}_consensus.nc"
         try:
             flpe_mm = Dataset(flpe_file_metroman, 'r')
         except:
@@ -350,6 +352,10 @@ class ValidationConfluence:
             flpe_si = Dataset(flpe_file_sic4dvar, 'r')
         except:
             flpe_si=-9999
+        try:
+            flpe_co = Dataset(flpe_file_consensus, 'r')
+        except:
+            flpe_co=-9999
       
         
         flpe_data = {}
@@ -392,18 +398,25 @@ class ValidationConfluence:
             conlen=len(flpe_data["sic4dvar"])
             flpe_si.close()
 
+        if flpe_co==-9999:
+            flpe_data["consensus"]=-9999
+        else:
+            flpe_data["consensus"] = flpe_si[convention_dict["consensus"]][:].filled(np.nan)
+            conlen=len(flpe_data["consensus"])
+            flpe_si.close()
+
         if conlen > 0:
-            #create pre-offline consensus
-            ALLQ=np.full((len(flpe_data.keys()),  conlen), np.nan)
-            for row in range(len(flpe_data.keys())):
-                ALGv=flpe_data[list(flpe_data.keys())[row]]
-                if np.size(ALGv)==conlen:
-                    ALGv[ALGv<0]=np.nan
-                    ALLQ[row,:]=ALGv
+            # #create pre-offline consensus
+            # ALLQ=np.full((len(flpe_data.keys()),  conlen), np.nan)
+            # for row in range(len(flpe_data.keys())):
+            #     ALGv=flpe_data[list(flpe_data.keys())[row]]
+            #     if np.size(ALGv)==conlen:
+            #         ALGv[ALGv<0]=np.nan
+            #         ALLQ[row,:]=ALGv
                 
 
-            consensus=np.nanmedian(ALLQ,axis=0)
-            flpe_data["consensus"]=consensus
+            # consensus=np.nanmedian(ALLQ,axis=0)
+            # flpe_data["consensus"]=consensus
             
             
             if self.is_flpe_valid(flpe_data):
