@@ -37,7 +37,7 @@ import seaborn as sb
 
 # Local imports
 from val.validation import stats
-from sos_read.sos_read import download_sos
+#from sos_read.sos_read import download_sos
 
 # Third-party imports
 from netCDF4 import Dataset, stringtochar,chartostring
