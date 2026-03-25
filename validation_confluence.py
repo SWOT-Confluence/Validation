@@ -331,9 +331,9 @@ class ValidationConfluence:
         except:
             flpe_mm=-9999
         try:    
-            flpe_nb = Dataset(flpe_file_neobam, 'r')
+            flpe_bb = Dataset(flpe_file_busboi, 'r')
         except:
-            flpe_nb=-9999
+            flpe_bb=-9999
         try:
             flpe_hi = Dataset(flpe_file_hivdi, 'r')
         except:
@@ -361,12 +361,12 @@ class ValidationConfluence:
             flpe_data["metroman"] =  flpe_mm[convention_dict["metroman"]][:].filled(np.nan)
             conlen=len(flpe_data["metroman"])
             flpe_mm.close()
-        if flpe_nb==-9999:
-            flpe_data["neobam"] =-9999
+        if flpe_bb==-9999:
+            flpe_data["busboi"] =-9999
         else:    
-            flpe_data["neobam"] =  flpe_nb[convention_dict["neobam"]][:].filled(np.nan)
-            conlen=len(flpe_data["neobam"])
-            flpe_nb.close()
+            flpe_data["busboi"] =  flpe_bb[convention_dict["busboi"]][:].filled(np.nan)
+            conlen=len(flpe_data["busboi"])
+            flpe_bb.close()
         if flpe_hi ==-9999:
             flpe_data["hivdi"] =-9999
         else:
