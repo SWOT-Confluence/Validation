@@ -311,7 +311,7 @@ class ValidationConfluence:
         """
         convention_dict = {
             "metroman":"average/allq",
-            "neobam":"q/q",
+            "busboi":"q/q",
             "hivdi":"reach/Q",
             "momma":"Q",
             "sad":"Qa",  
@@ -321,7 +321,7 @@ class ValidationConfluence:
         }
 
         flpe_file_metroman = f"{flpe_dir}/{'metroman'}/{self.reach_id}_metroman.nc"
-        flpe_file_neobam = f"{flpe_dir}/{'geobam'}/{self.reach_id}_geobam.nc"
+        flpe_file_busboi = f"{flpe_dir}/{'busboi'}/{self.reach_id}_busboi.nc"
         # flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_h2ivdi.nc"
         flpe_file_momma = f"{flpe_dir}/{'momma'}/{self.reach_id}_momma.nc"
         flpe_file_sad = f"{flpe_dir}/{'sad'}/{self.reach_id}_sad.nc"
