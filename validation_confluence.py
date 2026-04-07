@@ -257,7 +257,7 @@ class ValidationConfluence:
         moi = Dataset(moi_file, 'r')
         moi_data = {}
         moi_data["metroman"] =  moi["metroman/q"][:].filled(np.nan)
-        moi_data["neobam"] =  moi["neobam/q"][:].filled(np.nan)
+        oi_data["busboi"] = moi["busboi/q"][:].filled(np.nan)
         moi_data["hivdi"] =  moi["hivdi/q"][:].filled(np.nan)
         moi_data["momma"] =  moi["momma/q"][:].filled(np.nan)
         moi_data["sad"] = moi["sad/q"][:].filled(np.nan)
@@ -311,7 +311,7 @@ class ValidationConfluence:
         """
         convention_dict = {
             "metroman":"average/allq",
-            "neobam":"q/q",
+            "busboi":"q/q",
             "hivdi":"reach/Q",
             "momma":"Q",
             "sad":"Qa",  
@@ -321,8 +321,8 @@ class ValidationConfluence:
         }
 
         flpe_file_metroman = f"{flpe_dir}/{'metroman'}/{self.reach_id}_metroman.nc"
-        flpe_file_neobam = f"{flpe_dir}/{'geobam'}/{self.reach_id}_geobam.nc"
-        # flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_h2ivdi.nc"
+        flpe_file_busboi = f"{flpe_dir}/{'busboi'}/{self.reach_id}_busboi.nc"
+        flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_h2ivdi.nc"
         flpe_file_momma = f"{flpe_dir}/{'momma'}/{self.reach_id}_momma.nc"
         flpe_file_sad = f"{flpe_dir}/{'sad'}/{self.reach_id}_sad.nc"
         flpe_file_sic4dvar = f"{flpe_dir}/{'sic4dvar'}/{self.reach_id}_sic4dvar.nc"
@@ -331,9 +331,9 @@ class ValidationConfluence:
         except:
             flpe_mm=-9999
         try:    
-            flpe_nb = Dataset(flpe_file_neobam, 'r')
+            flpe_bb = Dataset(flpe_file_busboi, 'r')
         except:
-            flpe_nb=-9999
+            flpe_bb=-9999
         try:
             flpe_hi = Dataset(flpe_file_hivdi, 'r')
         except:
@@ -361,12 +361,12 @@ class ValidationConfluence:
             flpe_data["metroman"] =  flpe_mm[convention_dict["metroman"]][:].filled(np.nan)
             conlen=len(flpe_data["metroman"])
             flpe_mm.close()
-        if flpe_nb==-9999:
-            flpe_data["neobam"] =-9999
+        if flpe_bb==-9999:
+            flpe_data["busboi"] =-9999
         else:    
-            flpe_data["neobam"] =  flpe_nb[convention_dict["neobam"]][:].filled(np.nan)
-            conlen=len(flpe_data["neobam"])
-            flpe_nb.close()
+            flpe_data["busboi"] =  flpe_bb[convention_dict["busboi"]][:].filled(np.nan)
+            conlen=len(flpe_data["busboi"])
+            flpe_bb.close()
         if flpe_hi ==-9999:
             flpe_data["hivdi"] =-9999
         else:
@@ -444,14 +444,14 @@ class ValidationConfluence:
         """
         convention_dict = {
             "metro_q_c":"dschg_gm",
-            "bam_q_c":"dschg_gb",
+            "busboi_q_c":"dschg_gb",
+            "busboi_q_uc":"dschg_b",
             "hivdi_q_c":"dschg_gh",
             "momma_q_c":"dschg_go",
             "sads_q_c":"dschg_gs",
             "consensus_q_c":"dschg_gc",
             "sic4dvar_q_c":"dschg_gi",
             "metro_q_uc":"dschg_m",
-            "bam_q_uc":"dschg_b",
             "hivdi_q_uc":"dschg_h",
             "momma_q_uc":"dschg_o",
             "sads_q_uc":"dschg_s",
@@ -464,14 +464,14 @@ class ValidationConfluence:
         offline_file = f"{offline_dir}/{self.reach_id}_offline.nc"
         off = Dataset(offline_file, 'r')
         offline_data = {}
-        offline_data[convention_dict["bam_q_c"]] = off[convention_dict["bam_q_c"]][:].filled(np.nan)
+        offline_data[convention_dict["busboi_q_c"]] = off[convention_dict["busboi_q_c"]][:].filled(np.nan)
+        offline_data[convention_dict["busboi_q_uc"]] = off[convention_dict["busboi_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["hivdi_q_c"]] = off[convention_dict["hivdi_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["metro_q_c"]] = off[convention_dict["metro_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["momma_q_c"]] = off[convention_dict["momma_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["sads_q_c"]] = off[convention_dict["sads_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["sic4dvar_q_c"]] = off[convention_dict["sic4dvar_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["sic4dvar_q_uc"]] = off[convention_dict["sic4dvar_q_uc"]][:].filled(np.nan)
-        offline_data[convention_dict["bam_q_uc"]] = off[convention_dict["bam_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["hivdi_q_uc"]] = off[convention_dict["hivdi_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["metro_q_uc"]] = off[convention_dict["metro_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["momma_q_uc"]] = off[convention_dict["momma_q_uc"]][:].filled(np.nan)
