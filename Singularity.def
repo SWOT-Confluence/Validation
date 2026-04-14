@@ -1,0 +1,10 @@
+Bootstrap: docker
+From: ghcr.io/swot-confluence/validation:latest
+
+%files
+    val/. /app/val/
+    sos_read/. /app/sos_read/
+    validation_confluence.py /app/validation_confluence.py
+
+%runscript
+    exec /app/env/bin/python3 /app/validation_confluence.py "$@"
