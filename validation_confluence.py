@@ -55,6 +55,26 @@ TMP_DIR = Path("/tmp")
 SVS_FILE = Path("/mnt/data/input/svs/SVS_v1_0.5_trans_v17.nc")
 SVS_EXCLUDE_JSON = Path("/mnt/data/input/svs/reachids_svs_gages_used_to_train.json")
 
+FLPE_MOI_ALGOS = [
+    "metroman",
+    "busboi",
+    "hivdi",
+    "momma",
+    "sad",
+    "sic4dvar",
+    "consensus",
+]
+
+MOI_BASE_ALGOS = [
+    "metroman",
+    "busboi",
+    "hivdi",
+    "momma",
+    "sad",
+    "sic4dvar",
+]
+
+
 class ValidationConfluence:
     """Class that runs validation operations for Confluence workflow.
     
@@ -102,7 +122,7 @@ class ValidationConfluence:
     """
 
     INT_FILL = -999
-    NUM_ALGOS = 8  # flpe/moi: metroman, neobam, busboi, hivdi, momma, sad, sic4dvar, consensus
+    NUM_ALGOS = len(FLPE_MOI_ALGOS)  # flpe/moi: metroman, busboi, hivdi, momma, sad, sic4dvar, consensus
     NUM_ALGOS_OFFLINE = 16
 
     def __init__(self, reach_data, flpe_dir, moi_dir, offline_dir, input_dir, output_dir, run_type, gage_dir, svs_file=None, exclude_json=None):
@@ -379,31 +399,38 @@ class ValidationConfluence:
         moi_file = f"{moi_dir}/{self.reach_id}_integrator.nc"
         moi = Dataset(moi_file, 'r')
         moi_data = {}
-        moi_data["metroman"] = moi["metroman/q"][:].filled(np.nan)
-        moi_data["neobam"] = moi["neobam/q"][:].filled(np.nan)
-        moi_data["busboi"] = moi["busboi/q"][:].filled(np.nan)
-        moi_data["hivdi"] = moi["hivdi/q"][:].filled(np.nan)
-        moi_data["momma"] = moi["momma/q"][:].filled(np.nan)
-        moi_data["sad"] = moi["sad/q"][:].filled(np.nan)
-        moi_data["sic4dvar"] = moi["sic4dvar/q"][:].filled(np.nan)
-        moi_data["consensus"] = moi["consensus/q"][:].filled(np.nan)
-        moi.close()
-        
-        #create pre-offline consensus
-        ALLQ = np.full((len(moi_data.keys()), len(moi_data["metroman"])), np.nan)
-        for row in range(len(moi_data.keys())):
-            ALGv = moi_data[list(moi_data.keys())[row]]
-            ALGv[ALGv < 0] = np.nan
-            ALLQ[row, :] = ALGv
 
-        consensus = np.nanmedian(ALLQ, axis=0)
-        moi_data["consensus"] = consensus
-        
+        def safe_read_q(group_name):
+            if group_name in moi.groups and "q" in moi[group_name].variables:
+                return moi[f"{group_name}/q"][:].filled(np.nan)
+            return -9999
+
+        for algo in MOI_BASE_ALGOS:
+            moi_data[algo] = safe_read_q(algo)
+
+        moi.close()
+
+        # MOI output does not write a consensus group, so compute it here
+        # from the available basin-scale algorithm discharge series.
+        ref_key = next((k for k in MOI_BASE_ALGOS if not np.isscalar(moi_data[k])), None)
+        if ref_key is not None:
+            allq = np.full((len(MOI_BASE_ALGOS), len(moi_data[ref_key])), np.nan)
+            for row, algo in enumerate(MOI_BASE_ALGOS):
+                algv = moi_data[algo]
+                if np.isscalar(algv) and algv == -9999:
+                    continue
+                algv = algv.copy()
+                algv[algv < 0] = np.nan
+                allq[row, :] = algv
+            moi_data["consensus"] = np.nanmedian(allq, axis=0)
+        else:
+            moi_data["consensus"] = -9999
+
         if self.is_moi_valid(moi_data):
             return moi_data
-        else: 
+        else:
             return {}
-    
+
     def is_moi_valid(self, moi_data):
         """Check if moi data is only comprised of NaN values.
         
@@ -437,7 +464,6 @@ class ValidationConfluence:
         """
         convention_dict = {
             "metroman": "average/allq",
-            "neobam": "q/q",
             "busboi": "q/q",
             "hivdi": "reach/Q",
             "momma": "Q",
@@ -446,107 +472,39 @@ class ValidationConfluence:
             "consensus": "consensus_q",
         }
 
-        flpe_file_metroman = f"{flpe_dir}/{'metroman'}/{self.reach_id}_metroman.nc"
-        flpe_file_neobam = f"{flpe_dir}/{'geobam'}/{self.reach_id}_geobam.nc"
-        flpe_file_busboi = f"{flpe_dir}/{'busboi'}/{self.reach_id}_busboi.nc"
-        flpe_file_momma = f"{flpe_dir}/{'momma'}/{self.reach_id}_momma.nc"
-        flpe_file_sad = f"{flpe_dir}/{'sad'}/{self.reach_id}_sad.nc"
-        flpe_file_sic4dvar = f"{flpe_dir}/{'sic4dvar'}/{self.reach_id}_sic4dvar.nc"
-        flpe_file_hivdi = f"{flpe_dir}/{'hivdi'}/{self.reach_id}_hivdi.nc"
-        flpe_file_consensus = f"{flpe_dir}/{'consensus'}/{self.reach_id}_consensus.nc"
-        try:
-            flpe_mm = Dataset(flpe_file_metroman, 'r')
-        except:
-            flpe_mm = -9999
-        try:    
-            flpe_nb = Dataset(flpe_file_neobam, 'r')
-        except:
-            flpe_nb = -9999
-        try:    
-            flpe_bb = Dataset(flpe_file_busboi, 'r')
-        except:
-            flpe_bb = -9999
-        try:
-            flpe_hi = Dataset(flpe_file_hivdi, 'r')
-        except:
-            flpe_hi = -9999
-        try:
-            flpe_mo = Dataset(flpe_file_momma, 'r')
-        except:
-            flpe_mo = -9999
-        try:
-            flpe_sa = Dataset(flpe_file_sad, 'r')
-        except:
-            flpe_sa = -9999
-        try:
-            flpe_si = Dataset(flpe_file_sic4dvar, 'r')
-        except:
-            flpe_si = -9999
-        try:
-            flpe_cons = Dataset(flpe_file_consensus, 'r')
-        except:
-            flpe_cons = -9999
-            
+        flpe_file_map = {
+            "metroman": f"{flpe_dir}/metroman/{self.reach_id}_metroman.nc",
+            "busboi": f"{flpe_dir}/busboi/{self.reach_id}_busboi.nc",
+            "hivdi": f"{flpe_dir}/hivdi/{self.reach_id}_hivdi.nc",
+            "momma": f"{flpe_dir}/momma/{self.reach_id}_momma.nc",
+            "sad": f"{flpe_dir}/sad/{self.reach_id}_sad.nc",
+            "sic4dvar": f"{flpe_dir}/sic4dvar/{self.reach_id}_sic4dvar.nc",
+            "consensus": f"{flpe_dir}/consensus/{self.reach_id}_consensus.nc",
+        }
+
         flpe_data = {}
         conlen = 0
-        
-        if flpe_mm == -9999:
-            flpe_data["metroman"] = -9999
-        else:
-            flpe_data["metroman"] = flpe_mm[convention_dict["metroman"]][:].filled(np.nan)
-            conlen = len(flpe_data["metroman"])
-            flpe_mm.close()
-        if flpe_nb == -9999:
-            flpe_data["neobam"] = -9999
-        else:    
-            flpe_data["neobam"] = flpe_nb[convention_dict["neobam"]][:].filled(np.nan)
-            conlen = len(flpe_data["neobam"])
-            flpe_nb.close()
-        if flpe_bb == -9999:
-            flpe_data["busboi"] = -9999
-        else:    
-            flpe_data["busboi"] = flpe_bb[convention_dict["busboi"]][:].filled(np.nan)
-            conlen = len(flpe_data["busboi"])
-            flpe_bb.close()
-        if flpe_hi == -9999:
-            flpe_data["hivdi"] = -9999
-        else:
-            flpe_data["hivdi"] = flpe_hi[convention_dict["hivdi"]][:].filled(np.nan)
-            conlen = len(flpe_data["hivdi"])
-            flpe_hi.close()
-        if flpe_mo == -9999:
-            flpe_data["momma"] = -9999
-        else:            
-            flpe_data["momma"] = flpe_mo[convention_dict["momma"]][:].filled(np.nan)
-            conlen = len(flpe_data["momma"])
-            flpe_mo.close()
-        if flpe_sa == -9999:
-            flpe_data["sad"] = -9999
-        else:
-            flpe_data["sad"] = flpe_sa[convention_dict["sad"]][:].filled(np.nan)
-            conlen = len(flpe_data["sad"])
-            flpe_sa.close()
-        if flpe_si == -9999:
-            flpe_data["sic4dvar"] = -9999
-        else:
-            flpe_data["sic4dvar"] = flpe_si[convention_dict["sic4dvar"]][:].filled(np.nan)
-            conlen = len(flpe_data["sic4dvar"])
-            flpe_si.close()
-        if flpe_cons == -9999:
-            flpe_data["consensus"] = -9999
-        else:
-            flpe_data["consensus"] = flpe_cons[convention_dict["consensus"]][:].filled(np.nan)
-            conlen = len(flpe_data["consensus"])
-            flpe_cons.close()
+
+        for algo in FLPE_MOI_ALGOS:
+            flpe_file = flpe_file_map[algo]
+            try:
+                flpe_ds = Dataset(flpe_file, 'r')
+            except Exception:
+                flpe_data[algo] = -9999
+                continue
+
+            flpe_data[algo] = flpe_ds[convention_dict[algo]][:].filled(np.nan)
+            conlen = len(flpe_data[algo])
+            flpe_ds.close()
 
         if conlen > 0:
             if self.is_flpe_valid(flpe_data):
                 return flpe_data
-            else: 
+            else:
                 return {}
         else:
             return {}
-    
+
     def is_flpe_valid(self, flpe_data):
         """Check if flpe data is only comprised of NaN values.
         
@@ -689,7 +647,7 @@ class ValidationConfluence:
             "n": np.full(algo_dim, fill_value=-9999),           
             "nRMSE": np.full(algo_dim, fill_value=-9999),           
             "nBIAS": np.full(algo_dim, fill_value=-9999),
-            "t": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "t": np.full(Tdim, fill_value=-9999),
             "consensus": np.full(Tdim, fill_value=-9999),
         }
 
@@ -722,7 +680,7 @@ class ValidationConfluence:
             "n": np.full(algo_dim, fill_value=-9999),           
             "nRMSE": np.full(algo_dim, fill_value=-9999),           
             "nBIAS": np.full(algo_dim, fill_value=-9999),
-            "t": np.full((self.NUM_ALGOS), fill_value=-9999),
+            "t": np.full(Tdim, fill_value=-9999),
             "consensus": np.full(Tdim, fill_value=-9999),
         }
 
@@ -751,7 +709,7 @@ class ValidationConfluence:
             "n": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),           
             "nRMSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),           
             "nBIAS": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "t": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
+            "t": np.full(Tdim, fill_value=-9999),
             "consensus": np.full(Tdim, fill_value=-9999),
         }
         
@@ -819,15 +777,25 @@ class ValidationConfluence:
         out.has_validation_o    = 0 if np.where(stats_O["algorithm"]    == "")[0].size == self.NUM_ALGOS_OFFLINE else 1
         out.gage_type = gage_type.upper()
         
-        # Separate fixed dimensions for flpe/moi (8) and offline (16)
-        out.createDimension("num_algos_flpe", self.NUM_ALGOS)            # 8
-        out.createDimension("num_algos_offline", self.NUM_ALGOS_OFFLINE) # 16
+        # Separate fixed dimensions for flpe/moi and offline
+        out.createDimension("num_algos_flpe", self.NUM_ALGOS)
+        out.createDimension("num_algos_offline", self.NUM_ALGOS_OFFLINE)
         c_dim_flpe = out.createDimension("nchar_flpe", None)
         c_dim_gage = out.createDimension("nchar_gage", None)
-        t_dim = out.createDimension("time", len(stats_flpe["t"]))
+
+        time_values = None
+        for stats_dict in (stats_flpe, stats_moi, stats_O):
+            candidate = np.asarray(stats_dict["t"])
+            if candidate.size > 0 and not np.all(np.isclose(candidate, empty)):
+                time_values = candidate
+                break
+        if time_values is None:
+            time_values = np.array([], dtype=int)
+
+        t_dim = out.createDimension("time", len(time_values))
         t_v_flpe = out.createVariable("time", "i4", ("time",))
-        t_v_flpe.units = "days since Jan 1 Year 1"       
-        t_v_flpe[:] = stats_flpe["t"]
+        t_v_flpe.units = "days since Jan 1 Year 1"
+        t_v_flpe[:] = time_values
 
         # --- FLPE variables (use num_algos_flpe) ---
         if FLPEno == False:    
