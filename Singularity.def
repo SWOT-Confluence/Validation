@@ -6,5 +6,11 @@ From: ghcr.io/swot-confluence/validation:latest
     sos_read/. /app/sos_read/
     validation_confluence.py /app/validation_confluence.py
 
+%post
+    /app/env/bin/python3 -m pip install --no-cache-dir --upgrade pip
+    /app/env/bin/python3 -m pip install --no-cache-dir \
+        numpy scipy netCDF4 matplotlib seaborn \
+        boto3 botocore s3transfer jmespath
+
 %runscript
     exec /app/env/bin/python3 /app/validation_confluence.py "$@"
