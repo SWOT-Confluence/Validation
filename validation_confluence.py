@@ -156,11 +156,10 @@ class ValidationConfluence:
             self.gage_data = self.read_gage_data_svs(svs_file, exclude_json)
         else:
             self.gage_data = self.read_gage_data(gage_dir / reach_data["sos"])
-        try:
-            self.offline_data = self.read_offline_data(offline_dir)
-        except FileNotFoundError:
-            warnings.warn(f'No offline file found for reach {self.reach_id}, skipping offline validation')
-            self.offline_data = {}
+
+        #turn off offline for this run (v4)
+        self.offline_data = {}
+        
         self.flpe_data = self.read_flpe_data(flpe_dir)
         try:
             self.moi_data = self.read_moi_data(moi_dir)
