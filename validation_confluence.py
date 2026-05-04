@@ -156,11 +156,10 @@ class ValidationConfluence:
             self.gage_data = self.read_gage_data_svs(svs_file, exclude_json)
         else:
             self.gage_data = self.read_gage_data(gage_dir / reach_data["sos"])
-        try:
-            self.offline_data = self.read_offline_data(offline_dir)
-        except FileNotFoundError:
-            warnings.warn(f'No offline file found for reach {self.reach_id}, skipping offline validation')
-            self.offline_data = {}
+
+        #turn off offline for this run (v4)
+        self.offline_data = {}
+        
         self.flpe_data = self.read_flpe_data(flpe_dir)
         try:
             self.moi_data = self.read_moi_data(moi_dir)
@@ -635,18 +634,19 @@ class ValidationConfluence:
         algo_dim = int(self.NUM_ALGOS)
         Tdim = len(time)
         # Data fill values
-        data_flpe = {
-            "algorithm": np.full(algo_dim, fill_value=""),
-            "Gid": np.full(algo_dim, fill_value=""),
-            "pearsonr": np.full(algo_dim, fill_value=-9999),
-            "SIGe": np.full(algo_dim, fill_value=-9999),
-            "NSE": np.full(algo_dim, fill_value=-9999),           
-            "Rsq": np.full(algo_dim, fill_value=-9999),
-            "KGE": np.full(algo_dim, fill_value=-9999),           
-            "RMSE": np.full(algo_dim, fill_value=-9999),           
-            "n": np.full(algo_dim, fill_value=-9999),           
-            "nRMSE": np.full(algo_dim, fill_value=-9999),           
-            "nBIAS": np.full(algo_dim, fill_value=-9999),
+        no_offline = True
+        data_O = {
+            "algorithm": np.full((self.NUM_ALGOS_OFFLINE), fill_value=""),
+            "Gid": np.full((self.NUM_ALGOS_OFFLINE), fill_value=""),
+            "pearsonr": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
+            "SIGe": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
+            "NSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
+            "Rsq": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
+            "KGE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
+            "RMSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
+            "n": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
+            "nRMSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
+            "nBIAS": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
             "t": np.full(Tdim, fill_value=-9999),
             "consensus": np.full(Tdim, fill_value=-9999),
         }
