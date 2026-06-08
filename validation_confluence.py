@@ -697,35 +697,6 @@ class ValidationConfluence:
         else:
             warnings.warn('No gauge found for reach...')
 
-        data_O = {
-            "algorithm": np.full((self.NUM_ALGOS_OFFLINE), fill_value=""),
-            "Gid": np.full((self.NUM_ALGOS_OFFLINE), fill_value=""),
-            "pearsonr": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "SIGe": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "NSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),           
-            "Rsq": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "KGE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),           
-            "RMSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),           
-            "n": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),           
-            "nRMSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),           
-            "nBIAS": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "t": np.full(Tdim, fill_value=-9999),
-            "consensus": np.full(Tdim, fill_value=-9999),
-        }
-        
-        no_offline = False
-        # Check if there is data to validate
-        if self.gage_data:
-            if self.offline_data:
-                data_O = stats(time, self.offline_data, self.gage_data["qt"], 
-                               self.gage_data["q"], self.gage_data["gid"], str(self.reach_id), 
-                               self.output_dir / "figs")
-            else:
-                warnings.warn('No offline data found...')
-                no_offline = True
-        else:
-            warnings.warn('No gauge found for reach...')
-            
         # Write out valid or invalid data
         gage_type = "No data" if not self.gage_data else self.gage_data["type"]       
         ALLnone = np.all([no_flpe, no_moi, no_offline])     
