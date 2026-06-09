@@ -727,18 +727,6 @@ class ValidationConfluence:
         fill = -999999999999
         empty = -9999
         
-        def safe_gid(gid_array):
-            """Flatten Gid array to 1D array of strings for stringtochar."""
-            flat = []
-            for g in gid_array:
-                if isinstance(g, np.ndarray):
-                    flat.append(str(g.flat[0]))
-                elif isinstance(g, (list, tuple)):
-                    flat.append(str(g[0]))
-                else:
-                    flat.append(str(g))
-            return np.array(flat)
-        
         out = Dataset(self.output_dir / "stats" / f"{reach_id}_validation.nc", 'w')
         out.reach_id = reach_id
         out.description = f"Statistics for reach: {reach_id}"
@@ -773,7 +761,7 @@ class ValidationConfluence:
             a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos_flpe", "nchar_flpe"),)        
             a_v_flpe[:] = stringtochar(stats_flpe["algorithm"][0].astype("S16"))           
             gid_v_flpe = out.createVariable("gageID_flpe", "S1", ("num_algos_flpe", "nchar_gage"), fill_value=fill)
-            gid_v_flpe[:] = stringtochar(safe_gid(stats_flpe["Gid"]).astype("S16"))
+            gid_v_flpe[:] = stats_flpe["Gid"]
             r_v_flpe = out.createVariable("pearsonr_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
             r_v_flpe[:] = np.where(np.isclose(stats_flpe["pearsonr"], empty), fill, stats_flpe["pearsonr"])
             sige_v_flpe = out.createVariable("SIGe_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
@@ -833,7 +821,7 @@ class ValidationConfluence:
             a_v_moi = out.createVariable("algorithm_moi", 'S1', ("num_algos_flpe", "nchar_flpe"),)
             a_v_moi[:] = stringtochar(stats_moi["algorithm"][0].astype("S16"))
             gid_v_moi = out.createVariable("gageID_moi", "S1", ("num_algos_flpe", "nchar_gage"), fill_value=fill)
-            gid_v_moi[:] = stringtochar(safe_gid(stats_moi["Gid"]).astype("S16"))
+            gid_v_moi[:] = stringtochar(stats_moi["Gid"].astype("S16"))
             r_v_moi = out.createVariable("pearsonr_moi", "f8", ("num_algos_flpe",), fill_value=fill)
             r_v_moi[:] = np.where(np.isclose(stats_moi["pearsonr"], empty), fill, stats_moi["pearsonr"])            
             sige_v_moi = out.createVariable("SIGe_moi", "f8", ("num_algos_flpe",), fill_value=fill)
@@ -887,7 +875,7 @@ class ValidationConfluence:
             a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_offline", "nchar_flpe"),)      
             a_v_o[:] = stringtochar(stats_O["algorithm"][0].astype("S16"))
             gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos_offline", "nchar_gage"), fill_value=fill)
-            gid_v_o[:] = stringtochar(safe_gid(stats_O["Gid"]).astype("S16"))
+            gid_v_o[:] = stringtochar(stats_O["Gid"].astype("S16"))
             r_v_o = out.createVariable("pearsonr_o", "f8", ("num_algos_offline",), fill_value=fill)
             r_v_o[:] = np.where(np.isclose(stats_O["pearsonr"], empty), fill, stats_O["pearsonr"])                  
             sige_v_o = out.createVariable("SIGe_o", "f8", ("num_algos_offline",), fill_value=fill)
