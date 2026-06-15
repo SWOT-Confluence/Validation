@@ -757,7 +757,7 @@ class ValidationConfluence:
             a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos_flpe", "nchar_flpe"),)        
             a_v_flpe[:] = stringtochar(stats_flpe["algorithm"][0].astype("S16"))           
             gid_v_flpe = out.createVariable("gageID_flpe", "S1", ("num_algos_flpe", "nchar_gage"), fill_value=fill)
-            gid_v_flpe[:] = stats_flpe["Gid"]
+            gid_v_flpe[:] = stringtochar(stats_flpe["Gid"].astype("S16"))
             r_v_flpe = out.createVariable("pearsonr_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
             r_v_flpe[:] = np.where(np.isclose(stats_flpe["pearsonr"], empty), fill, stats_flpe["pearsonr"])
             sige_v_flpe = out.createVariable("SIGe_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
