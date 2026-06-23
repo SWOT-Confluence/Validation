@@ -51,10 +51,6 @@ OFFLINE = Path("/mnt/data/offline")
 OUTPUT = Path("/mnt/data/output")
 TMP_DIR = Path("/tmp")
 
-# SVS validation paths (set to None to use SoS priors instead)
-SVS_FILE = Path("/mnt/data/input/svs/SVS_v1_0.5_trans_v17.nc")
-SVS_EXCLUDE_JSON = Path("/mnt/data/input/svs/reachids_svs_gages_used_to_train.json")
-
 FLPE_MOI_ALGOS = [
     "metroman",
     "busboi",
@@ -125,7 +121,7 @@ class ValidationConfluence:
     NUM_ALGOS = len(FLPE_MOI_ALGOS)  # flpe/moi: metroman, busboi, hivdi, momma, sad, sic4dvar, consensus
     NUM_ALGOS_OFFLINE = 16
 
-    def __init__(self, reach_data, flpe_dir, moi_dir, offline_dir, input_dir, output_dir, run_type, gage_dir, svs_file=None, exclude_json=None):
+    def __init__(self, reach_data, run_type, gage_dir, svs_file=None, exclude_json=None):
         """
         Parameters
         ----------
@@ -148,7 +144,8 @@ class ValidationConfluence:
             path to JSON file with reach IDs to exclude from SVS validation
         """
         
-        self.input_dir = input_dir
+        self.input_dir = INPUT
+        self.output_dir = OUTPUT
         self.run_type = run_type
         self.reach_id = reach_data["reach_id"]
         print('Processing', self.reach_id)
@@ -160,13 +157,12 @@ class ValidationConfluence:
         #turn off offline for this run (v4)
         self.offline_data = {}
         
-        self.flpe_data = self.read_flpe_data(flpe_dir)
+        self.flpe_data = self.read_flpe_data(FLPE)
         try:
-            self.moi_data = self.read_moi_data(moi_dir)
+            self.moi_data = self.read_moi_data(MOI)
         except FileNotFoundError:
             warnings.warn(f'No MOI file found for reach {self.reach_id}, skipping MOI validation')
             self.moi_data = {}
-        self.output_dir = output_dir
 
     def read_gage_data(self, sos_file):
         """Read gage data from SoS file and stores in gage data dictionary."""
@@ -697,35 +693,6 @@ class ValidationConfluence:
         else:
             warnings.warn('No gauge found for reach...')
 
-        data_O = {
-            "algorithm": np.full((self.NUM_ALGOS_OFFLINE), fill_value=""),
-            "Gid": np.full((self.NUM_ALGOS_OFFLINE), fill_value=""),
-            "pearsonr": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "SIGe": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "NSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),           
-            "Rsq": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "KGE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),           
-            "RMSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),           
-            "n": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),           
-            "nRMSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),           
-            "nBIAS": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "t": np.full(Tdim, fill_value=-9999),
-            "consensus": np.full(Tdim, fill_value=-9999),
-        }
-        
-        no_offline = False
-        # Check if there is data to validate
-        if self.gage_data:
-            if self.offline_data:
-                data_O = stats(time, self.offline_data, self.gage_data["qt"], 
-                               self.gage_data["q"], self.gage_data["gid"], str(self.reach_id), 
-                               self.output_dir / "figs")
-            else:
-                warnings.warn('No offline data found...')
-                no_offline = True
-        else:
-            warnings.warn('No gauge found for reach...')
-            
         # Write out valid or invalid data
         gage_type = "No data" if not self.gage_data else self.gage_data["type"]       
         ALLnone = np.all([no_flpe, no_moi, no_offline])     
@@ -755,18 +722,6 @@ class ValidationConfluence:
 
         fill = -999999999999
         empty = -9999
-        
-        def safe_gid(gid_array):
-            """Flatten Gid array to 1D array of strings for stringtochar."""
-            flat = []
-            for g in gid_array:
-                if isinstance(g, np.ndarray):
-                    flat.append(str(g.flat[0]))
-                elif isinstance(g, (list, tuple)):
-                    flat.append(str(g[0]))
-                else:
-                    flat.append(str(g))
-            return np.array(flat)
         
         out = Dataset(self.output_dir / "stats" / f"{reach_id}_validation.nc", 'w')
         out.reach_id = reach_id
@@ -802,7 +757,7 @@ class ValidationConfluence:
             a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos_flpe", "nchar_flpe"),)        
             a_v_flpe[:] = stringtochar(stats_flpe["algorithm"][0].astype("S16"))           
             gid_v_flpe = out.createVariable("gageID_flpe", "S1", ("num_algos_flpe", "nchar_gage"), fill_value=fill)
-            gid_v_flpe[:] = stringtochar(stats_flpe["Gid"][:].astype("S16"))
+            gid_v_flpe[:] = stringtochar(stats_flpe["Gid"].astype("S16"))
             r_v_flpe = out.createVariable("pearsonr_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
             r_v_flpe[:] = np.where(np.isclose(stats_flpe["pearsonr"], empty), fill, stats_flpe["pearsonr"])
             sige_v_flpe = out.createVariable("SIGe_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
@@ -862,7 +817,7 @@ class ValidationConfluence:
             a_v_moi = out.createVariable("algorithm_moi", 'S1', ("num_algos_flpe", "nchar_flpe"),)
             a_v_moi[:] = stringtochar(stats_moi["algorithm"][0].astype("S16"))
             gid_v_moi = out.createVariable("gageID_moi", "S1", ("num_algos_flpe", "nchar_gage"), fill_value=fill)
-            gid_v_moi[:] = stringtochar(stats_moi["Gid"][:].astype("S16"))
+            gid_v_moi[:] = stringtochar(stats_moi["Gid"].astype("S16"))
             r_v_moi = out.createVariable("pearsonr_moi", "f8", ("num_algos_flpe",), fill_value=fill)
             r_v_moi[:] = np.where(np.isclose(stats_moi["pearsonr"], empty), fill, stats_moi["pearsonr"])            
             sige_v_moi = out.createVariable("SIGe_moi", "f8", ("num_algos_flpe",), fill_value=fill)
@@ -916,7 +871,7 @@ class ValidationConfluence:
             a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_offline", "nchar_flpe"),)      
             a_v_o[:] = stringtochar(stats_O["algorithm"][0].astype("S16"))
             gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos_offline", "nchar_gage"), fill_value=fill)
-            gid_v_o[:] = stringtochar(stats_O["Gid"][:].astype("S16"))
+            gid_v_o[:] = stringtochar(stats_O["Gid"].astype("S16"))
             r_v_o = out.createVariable("pearsonr_o", "f8", ("num_algos_offline",), fill_value=fill)
             r_v_o[:] = np.where(np.isclose(stats_O["pearsonr"], empty), fill, stats_O["pearsonr"])                  
             sige_v_o = out.createVariable("SIGe_o", "f8", ("num_algos_offline",), fill_value=fill)
@@ -995,6 +950,14 @@ def get_reach_data(input_json, index_to_run, sos_bucket):
 
     return reach_data
 
+
+def existing_file(path_str: str) -> Path:
+    path = Path(path_str)
+
+    if not path.is_file():
+        raise argparse.ArgumentTypeError(f"'{path}' is not an existing file")
+
+    return path
   
 def create_args():
     """Create and return argparsers with command line arguments."""
@@ -1015,12 +978,19 @@ def create_args():
                             help='Indicates constrained or unconstrained run',
                             choices=['constrained', 'unconstrained'],
                             default='unconstrained')
+    arg_parser.add_argument('--svs_file',
+                            type=existing_file,
+                            help='Path to the SVS validation file.'
+                            )
+    arg_parser.add_argument('--exclude_gauges_file',
+                            type=existing_file,
+                            help='Path to the file of gauges to not use for validation.'
+                            )
     arg_parser.add_argument('-s',
                             '--sosbucket',
                             type=str,
                             help='Name of the SoS bucket and key to download from',
                             default='')
-
     return arg_parser
 
 
@@ -1053,17 +1023,13 @@ def run_validation():
     else:
         gage_dir = INPUT.joinpath("sos")
 
-    # Auto-detect SVS vs SoS: use SVS if the file exists, otherwise fall back to SoS priors
-    svs_file = None
-    exclude_json = None
-    if SVS_FILE.exists():
-        print(f'SVS file found: {SVS_FILE}. Remove SVS file in mnt/input/svs or change validation_confluence.py SVS filepaths to None to revert to sos priors.')
-        svs_file = SVS_FILE
-        if SVS_EXCLUDE_JSON.exists():
-            exclude_json = SVS_EXCLUDE_JSON
-
-    vc = ValidationConfluence(reach_data, FLPE, MOI, OFFLINE, INPUT, OUTPUT, run_type, gage_dir,
-                              svs_file=svs_file, exclude_json=exclude_json)
+    vc = ValidationConfluence(
+        reach_data, 
+        run_type, 
+        gage_dir, 
+        svs_file=args.svs_file, 
+        exclude_json=args.exclude_gauges_file
+    )
     vc.validate()
 
 
