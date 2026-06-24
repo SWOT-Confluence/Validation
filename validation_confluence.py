@@ -1033,8 +1033,8 @@ def run_validation():
         run_type, 
         gage_dir, 
         svs_file=args.svs_file, 
-        exclude_json=args.exclude_gauges_file
-        svs_reach_id_col=args.svs_reach_id_col
+        exclude_json=args.exclude_gauges_file,
+        svs_reach_id_col=args.svs_reach_id_col,
     )
     vc.validate()
 
