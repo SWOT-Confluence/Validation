@@ -150,7 +150,7 @@ class ValidationConfluence:
         self.reach_id = reach_data["reach_id"]
         print('Processing', self.reach_id)
         if svs_file is not None:
-            self.gage_data = self.read_gage_data_svs(svs_file, exclude_json)
+            self.gage_data = self.read_gage_data_svs(svs_file, exclude_json, svs_reach_id_col)
         else:
             self.gage_data = self.read_gage_data(gage_dir / reach_data["sos"])
 
