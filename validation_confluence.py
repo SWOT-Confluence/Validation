@@ -484,11 +484,18 @@ class ValidationConfluence:
             flpe_file = flpe_file_map[algo]
             try:
                 flpe_ds = Dataset(flpe_file, 'r')
-            except Exception:
+            except Exception as e:
+                print(f"Could not read flpe file: {flpe_file}.\n{e}")
                 flpe_data[algo] = -9999
                 continue
 
-            flpe_data[algo] = flpe_ds[convention_dict[algo]][:].filled(np.nan)
+            try:
+                flpe_data[algo] = flpe_ds[convention_dict[algo]][:].filled(np.nan)
+            except Exception as e:
+                print(f"Could not read discharge variable ({convention_dict[algo]}) from dataset: {flpe_file}.\n{e}")
+                flpe_data[algo] = -9999
+                continue
+
             conlen = len(flpe_data[algo])
             flpe_ds.close()
 
