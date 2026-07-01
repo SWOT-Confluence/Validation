@@ -757,7 +757,12 @@ class ValidationConfluence:
             a_v_flpe = out.createVariable("algorithm_flpe", 'S1', ("num_algos_flpe", "nchar_flpe"),)        
             a_v_flpe[:] = stringtochar(stats_flpe["algorithm"][0].astype("S16"))           
             gid_v_flpe = out.createVariable("gageID_flpe", "S1", ("num_algos_flpe", "nchar_gage"), fill_value=fill)
-            gid_v_flpe[:] = stringtochar(stats_flpe["Gid"].astype("S16"))
+            
+            gids_flpe = stats_flpe["Gid"]
+            if gids_flpe.ndim > 1:
+               gids_flpe = gids_flpe[:, 0]          # take first value per algo row
+            gid_v_flpe[:] = stringtochar(gids_flpe.astype("S16"))
+
             r_v_flpe = out.createVariable("pearsonr_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
             r_v_flpe[:] = np.where(np.isclose(stats_flpe["pearsonr"], empty), fill, stats_flpe["pearsonr"])
             sige_v_flpe = out.createVariable("SIGe_flpe", "f8", ("num_algos_flpe",), fill_value=fill)
@@ -817,7 +822,12 @@ class ValidationConfluence:
             a_v_moi = out.createVariable("algorithm_moi", 'S1', ("num_algos_flpe", "nchar_flpe"),)
             a_v_moi[:] = stringtochar(stats_moi["algorithm"][0].astype("S16"))
             gid_v_moi = out.createVariable("gageID_moi", "S1", ("num_algos_flpe", "nchar_gage"), fill_value=fill)
-            gid_v_moi[:] = stringtochar(stats_moi["Gid"].astype("S16"))
+
+            gids_moi = stats_moi["Gid"]
+            if gids_moi.ndim > 1:
+                gids_moi = gids_moi[:, 0]
+            gid_v_moi[:] = stringtochar(gids_moi.astype("S16"))    
+            
             r_v_moi = out.createVariable("pearsonr_moi", "f8", ("num_algos_flpe",), fill_value=fill)
             r_v_moi[:] = np.where(np.isclose(stats_moi["pearsonr"], empty), fill, stats_moi["pearsonr"])            
             sige_v_moi = out.createVariable("SIGe_moi", "f8", ("num_algos_flpe",), fill_value=fill)
@@ -871,7 +881,12 @@ class ValidationConfluence:
             a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_offline", "nchar_flpe"),)      
             a_v_o[:] = stringtochar(stats_O["algorithm"][0].astype("S16"))
             gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos_offline", "nchar_gage"), fill_value=fill)
-            gid_v_o[:] = stringtochar(stats_O["Gid"].astype("S16"))
+
+            gids_O = stats_O["Gid"]
+            if gids_O.ndim > 1:
+                gids_O = gids_O[:, 0]
+            gid_v_o[:] = stringtochar(gids_O.astype("S16"))
+            
             r_v_o = out.createVariable("pearsonr_o", "f8", ("num_algos_offline",), fill_value=fill)
             r_v_o[:] = np.where(np.isclose(stats_O["pearsonr"], empty), fill, stats_O["pearsonr"])                  
             sige_v_o = out.createVariable("SIGe_o", "f8", ("num_algos_offline",), fill_value=fill)
