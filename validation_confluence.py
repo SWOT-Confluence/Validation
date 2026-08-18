@@ -155,7 +155,7 @@ class ValidationConfluence:
             self.gage_data = self.read_gage_data(gage_dir / reach_data["sos"])
 
         #turn off offline for this run (v4)
-        self.offline_data = {}
+        self.offline_data = self.read_offline_data(OFFLINE)
         
         self.flpe_data = self.read_flpe_data(FLPE)
         try:
