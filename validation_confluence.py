@@ -540,8 +540,8 @@ class ValidationConfluence:
         """
         convention_dict = {
             "metro_q_c": "dschg_gm",
-            "bam_q_c": "dschg_gb",
-            "boi_q_c": "dschg_ga",
+            #"bam_q_c": "dschg_gb",
+            "boi_q_c": "dschg_gb",
             "hivdi_q_c": "dschg_gh",
             "momma_q_c": "dschg_go",
             "sads_q_c": "dschg_gs",
@@ -549,8 +549,8 @@ class ValidationConfluence:
             "consensus_q_c": "dschg_gc",
             "metro_q_uc": "dschg_m",
             "sic4dvar_q_uc": "dschg_i",
-            "bam_q_uc": "dschg_b",
-            "boi_q_uc": "dschg_a",
+            #"bam_q_uc": "dschg_b",
+            "boi_q_uc": "dschg_b",
             "hivdi_q_uc": "dschg_h",
             "momma_q_uc": "dschg_o",
             "sads_q_uc": "dschg_s",
