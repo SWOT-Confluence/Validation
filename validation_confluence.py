@@ -570,7 +570,7 @@ class ValidationConfluence:
         offline_data[convention_dict["sads_q_c"]] = off[convention_dict["sads_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["sic4dvar_q_c"]] = off[convention_dict["sic4dvar_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["sic4dvar_q_uc"]] = off[convention_dict["sic4dvar_q_uc"]][:].filled(np.nan)
-        offline_data[convention_dict["bam_q_uc"]] = off[convention_dict["bam_q_uc"]][:].filled(np.nan)
+        #offline_data[convention_dict["bam_q_uc"]] = off[convention_dict["bam_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["boi_q_uc"]] = off[convention_dict["boi_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["hivdi_q_uc"]] = off[convention_dict["hivdi_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["metro_q_uc"]] = off[convention_dict["metro_q_uc"]][:].filled(np.nan)
