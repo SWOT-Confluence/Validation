@@ -562,7 +562,7 @@ class ValidationConfluence:
         offline_file = f"{offline_dir}/{self.reach_id}_offline.nc"
         off = Dataset(offline_file, 'r')
         offline_data = {}
-        offline_data[convention_dict["bam_q_c"]] = off[convention_dict["bam_q_c"]][:].filled(np.nan)
+        #offline_data[convention_dict["bam_q_c"]] = off[convention_dict["bam_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["boi_q_c"]] = off[convention_dict["boi_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["hivdi_q_c"]] = off[convention_dict["hivdi_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["metro_q_c"]] = off[convention_dict["metro_q_c"]][:].filled(np.nan)
