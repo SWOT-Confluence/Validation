@@ -155,7 +155,11 @@ class ValidationConfluence:
             self.gage_data = self.read_gage_data(gage_dir / reach_data["sos"])
 
         #turn off offline for this run (v4)
-        self.offline_data = self.read_offline_data(OFFLINE)
+        try:
+            self.offline_data = self.read_offline_data(OFFLINE)
+        except:
+            warnings.warn(f'No offline file found for reach {self.reach_id}, skipping offline validation')
+            self.offline_data = {}
         
         self.flpe_data = self.read_flpe_data(FLPE)
         try:
@@ -637,7 +641,7 @@ class ValidationConfluence:
         algo_dim = int(self.NUM_ALGOS)
         Tdim = len(time)
         # Data fill values
-        no_offline = True
+        no_offline = False
         data_O = {
             "algorithm": np.full((self.NUM_ALGOS_OFFLINE), fill_value=""),
             "Gid": np.full((self.NUM_ALGOS_OFFLINE), fill_value=""),
