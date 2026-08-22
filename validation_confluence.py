@@ -216,7 +216,7 @@ class ValidationConfluence:
                 gmq.append(gage[f"{gage_type}_mean_q"][Gindex][:].filled(np.nan))
                 t = gage[f"{gage_type}_qt"][Gindex][:].filled(self.INT_FILL).astype(int)
                 glt.append(len(t[t > 0]))
-                 
+                 F
             if np.isnan(model_q):
                 #when model is nan, choose longest timeseries
                 index = np.array(index[np.argmax(np.array(glt))])
@@ -657,7 +657,22 @@ class ValidationConfluence:
             "t": np.full(Tdim, fill_value=-9999),
             "consensus": np.full(Tdim, fill_value=-9999),
         }
-
+        # Check if there is data to validate
+        if self.gage_data:
+            try:
+                if self.offline_data:
+                    data_flpe = stats(time, self.offline_data, self.gage_data["qt"], 
+                                      self.gage_data["q"], self.gage_data["gid"], str(self.reach_id), 
+                                      self.output_dir / "figs")
+                else:
+                    warnings.warn('No offline data found...')
+                    no_offline = True
+            except Exception as e:
+                warnings.warn(f'stats() failed for offline reach {self.reach_id}: {e}')
+                no_offline = True
+        else:
+            warnings.warn('No gauge found for reach...')
+            
         no_flpe = False
         # Check if there is data to validate
         if self.gage_data:
