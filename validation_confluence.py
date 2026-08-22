@@ -645,7 +645,7 @@ class ValidationConfluence:
         data_O = {
             "algorithm": np.full(algo_dim, fill_value=""),
             "Gid": np.full(algo_dim, fill_value=""),
-            "pearsonr": np.full(algo_dim), fill_value=-9999),
+            "pearsonr": np.full(algo_dim, fill_value=-9999),
             "SIGe": np.full(algo_dim, fill_value=-9999),
             "NSE": np.full(algo_dim, fill_value=-9999),
             "Rsq": np.full(algo_dim, fill_value=-9999),
