@@ -904,9 +904,7 @@ class ValidationConfluence:
 
         # --- Offline variables (use num_algos_offline) ---
         if OFFno == False:
-            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_offline", "nchar_flpe"),)
-            print(stats_O["algorithm"][0])
-            print(shape(stats_O["algorithm"][0]))
+            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_offline", "nchar_flpe"),)           
             a_v_o[:] = stringtochar(stats_O["algorithm"][0].astype("S16"))
             gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos_offline", "nchar_gage"), fill_value=fill)
 
