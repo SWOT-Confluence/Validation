@@ -216,7 +216,7 @@ class ValidationConfluence:
                 gmq.append(gage[f"{gage_type}_mean_q"][Gindex][:].filled(np.nan))
                 t = gage[f"{gage_type}_qt"][Gindex][:].filled(self.INT_FILL).astype(int)
                 glt.append(len(t[t > 0]))
-                 F
+                 
             if np.isnan(model_q):
                 #when model is nan, choose longest timeseries
                 index = np.array(index[np.argmax(np.array(glt))])
