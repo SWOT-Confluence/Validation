@@ -727,7 +727,7 @@ class ValidationConfluence:
 
     def write(self, stats_flpe, stats_moi, stats_O, reach_id, gage_type, GO):
         """Write stats to NetCDF file.
-        print(stats_O)
+        
         Parameters
         ----------
         stats_flpe: dict
@@ -904,6 +904,7 @@ class ValidationConfluence:
 
         # --- Offline variables (use num_algos_offline) ---
         if OFFno == False:
+            print(stats_O)
             a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_offline", "nchar_flpe"),)
             print(stats_O["algorithm"][0].astype("S16"))
             a_v_o[:] = stringtochar(stats_O["algorithm"][0].astype("S16"))
