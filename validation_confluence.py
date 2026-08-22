@@ -661,7 +661,7 @@ class ValidationConfluence:
         if self.gage_data:
             try:
                 if self.offline_data:
-                    data_flpe = stats(time, self.offline_data, self.gage_data["qt"], 
+                    data_offline = stats(time, self.offline_data, self.gage_data["qt"], 
                                       self.gage_data["q"], self.gage_data["gid"], str(self.reach_id), 
                                       self.output_dir / "figs")
                 else:
