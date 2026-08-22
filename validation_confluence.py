@@ -643,17 +643,17 @@ class ValidationConfluence:
         # Data fill values
         no_offline = False
         data_O = {
-            "algorithm": np.full((self.NUM_ALGOS_OFFLINE), fill_value=""),
-            "Gid": np.full((self.NUM_ALGOS_OFFLINE), fill_value=""),
-            "pearsonr": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "SIGe": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "NSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "Rsq": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "KGE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "RMSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "n": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "nRMSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "nBIAS": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
+            "algorithm": np.full(algo_dim, fill_value=""),
+            "Gid": np.full(algo_dim, fill_value=""),
+            "pearsonr": np.full(algo_dim), fill_value=-9999),
+            "SIGe": np.full(algo_dim, fill_value=-9999),
+            "NSE": np.full(algo_dim, fill_value=-9999),
+            "Rsq": np.full(algo_dim, fill_value=-9999),
+            "KGE": np.full(algo_dim, fill_value=-9999),
+            "RMSE": np.full(algo_dim, fill_value=-9999),
+            "n": np.full(algo_dim, fill_value=-9999),
+            "nRMSE": np.full(algo_dim, fill_value=-9999),
+            "nBIAS": np.full(algo_dim, fill_value=-9999),
             "t": np.full(Tdim, fill_value=-9999),
             "consensus": np.full(Tdim, fill_value=-9999),
         }
@@ -904,7 +904,9 @@ class ValidationConfluence:
 
         # --- Offline variables (use num_algos_offline) ---
         if OFFno == False:
-            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_offline", "nchar_flpe"),)      
+            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_offline", "nchar_flpe"),)
+            print(stats_O["algorithm"][0])
+            print(shape(stats_O["algorithm"][0]))
             a_v_o[:] = stringtochar(stats_O["algorithm"][0].astype("S16"))
             gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos_offline", "nchar_gage"), fill_value=fill)
 
