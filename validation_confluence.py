@@ -727,7 +727,7 @@ class ValidationConfluence:
 
     def write(self, stats_flpe, stats_moi, stats_O, reach_id, gage_type, GO):
         """Write stats to NetCDF file.
-        
+        print(stats_O)
         Parameters
         ----------
         stats_flpe: dict
