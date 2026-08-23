@@ -727,7 +727,7 @@ class ValidationConfluence:
         gage_type = "No data" if not self.gage_data else self.gage_data["type"]       
         ALLnone = np.all([no_flpe, no_moi, no_offline])     
         if (gage_type != "No data") and (ALLnone != True):
-            self.write(data_flpe, data_moi, data_O, self.reach_id, gage_type, [no_flpe, no_moi, no_offline])
+            self.write(data_flpe, data_moi, data_offline, self.reach_id, gage_type, [no_flpe, no_moi, no_offline])
 
     def write(self, stats_flpe, stats_moi, stats_O, reach_id, gage_type, GO):
         """Write stats to NetCDF file.
