@@ -639,21 +639,22 @@ class ValidationConfluence:
         # SWOT time 
         time = self.read_time_data()
         algo_dim = int(self.NUM_ALGOS)
+        algo_dim_o = int(self.NUM_ALGOS_OFFLINE)
         Tdim = len(time)
         # Data fill values
         no_offline = False
         data_offline = {
-            "algorithm": np.full(algo_dim, fill_value=""),
-            "Gid": np.full(algo_dim, fill_value=""),
-            "pearsonr": np.full(algo_dim, fill_value=-9999),
-            "SIGe": np.full(algo_dim, fill_value=-9999),
-            "NSE": np.full(algo_dim, fill_value=-9999),
-            "Rsq": np.full(algo_dim, fill_value=-9999),
-            "KGE": np.full(algo_dim, fill_value=-9999),
-            "RMSE": np.full(algo_dim, fill_value=-9999),
-            "n": np.full(algo_dim, fill_value=-9999),
-            "nRMSE": np.full(algo_dim, fill_value=-9999),
-            "nBIAS": np.full(algo_dim, fill_value=-9999),
+            "algorithm": np.full(algo_dim_o, fill_value=""),
+            "Gid": np.full(algo_dim_o, fill_value=""),
+            "pearsonr": np.full(algo_dim_o, fill_value=-9999),
+            "SIGe": np.full(algo_dim_o, fill_value=-9999),
+            "NSE": np.full(algo_dim_o, fill_value=-9999),
+            "Rsq": np.full(algo_dim_o, fill_value=-9999),
+            "KGE": np.full(algo_dim_o, fill_value=-9999),
+            "RMSE": np.full(algo_dim_o, fill_value=-9999),
+            "n": np.full(algo_dim_o, fill_value=-9999),
+            "nRMSE": np.full(algo_dim_o, fill_value=-9999),
+            "nBIAS": np.full(algo_dim_o, fill_value=-9999),
             "t": np.full(Tdim, fill_value=-9999),
             "consensus": np.full(Tdim, fill_value=-9999),
         }
