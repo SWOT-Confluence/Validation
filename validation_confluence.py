@@ -662,7 +662,7 @@ class ValidationConfluence:
             try:
                 if self.offline_data:
                     print('o before stats')
-                    print(data_offline)
+                    print(self.data_offline)
                     data_offline = stats(time, self.offline_data, self.gage_data["qt"], 
                                       self.gage_data["q"], self.gage_data["gid"], str(self.reach_id), 
                                       self.output_dir / "figs")
