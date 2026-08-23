@@ -642,7 +642,7 @@ class ValidationConfluence:
         Tdim = len(time)
         # Data fill values
         no_offline = False
-        data_O = {
+        data_offline = {
             "algorithm": np.full(algo_dim, fill_value=""),
             "Gid": np.full(algo_dim, fill_value=""),
             "pearsonr": np.full(algo_dim, fill_value=-9999),
