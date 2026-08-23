@@ -119,7 +119,7 @@ class ValidationConfluence:
 
     INT_FILL = -999
     NUM_ALGOS = len(FLPE_MOI_ALGOS)  # flpe/moi: metroman, busboi, hivdi, momma, sad, sic4dvar, consensus
-    NUM_ALGOS_OFFLINE = 16
+    NUM_ALGOS_OFFLINE = =NUM_ALGOS*2
 
     def __init__(self, reach_data, run_type, gage_dir, svs_file, exclude_json, svs_reach_id_col):
         """
