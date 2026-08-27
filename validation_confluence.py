@@ -58,6 +58,7 @@ FLPE_MOI_ALGOS = [
     "momma",
     "sad",
     "sic4dvar",
+    "qq",
     "consensus",
 ]
 
@@ -464,6 +465,7 @@ class ValidationConfluence:
             "momma": "Q",
             "sad": "Qa",
             "sic4dvar": "Q_da",
+            "qq": "q/QQ_q",
             "consensus": "consensus_q",
         }
 
@@ -474,6 +476,7 @@ class ValidationConfluence:
             "momma": f"{flpe_dir}/momma/{self.reach_id}_momma.nc",
             "sad": f"{flpe_dir}/sad/{self.reach_id}_sad.nc",
             "sic4dvar": f"{flpe_dir}/sic4dvar/{self.reach_id}_sic4dvar.nc",
+            "qq": f"{flpe_dir}/qq/{self.reach_id}_qq.nc",
             "consensus": f"{flpe_dir}/consensus/{self.reach_id}_consensus.nc",
         }
 
