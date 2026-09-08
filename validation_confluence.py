@@ -119,7 +119,7 @@ class ValidationConfluence:
 
     INT_FILL = -999
     NUM_ALGOS = len(FLPE_MOI_ALGOS)  # flpe/moi: metroman, busboi, hivdi, momma, sad, sic4dvar, consensus
-    NUM_ALGOS_OFFLINE = 16
+    NUM_ALGOS_OFFLINE = NUM_ALGOS*2
 
     def __init__(self, reach_data, run_type, gage_dir, svs_file, exclude_json, svs_reach_id_col):
         """
@@ -155,7 +155,11 @@ class ValidationConfluence:
             self.gage_data = self.read_gage_data(gage_dir / reach_data["sos"])
 
         #turn off offline for this run (v4)
-        self.offline_data = {}
+        try:
+            self.offline_data = self.read_offline_data(OFFLINE)
+        except:
+            warnings.warn(f'No offline file found for reach {self.reach_id}, skipping offline validation')
+            self.offline_data = {}
         
         self.flpe_data = self.read_flpe_data(FLPE)
         try:
@@ -540,8 +544,8 @@ class ValidationConfluence:
         """
         convention_dict = {
             "metro_q_c": "dschg_gm",
-            "bam_q_c": "dschg_gb",
-            "boi_q_c": "dschg_ga",
+            #"bam_q_c": "dschg_gb",
+            "boi_q_c": "dschg_gb",
             "hivdi_q_c": "dschg_gh",
             "momma_q_c": "dschg_go",
             "sads_q_c": "dschg_gs",
@@ -549,8 +553,8 @@ class ValidationConfluence:
             "consensus_q_c": "dschg_gc",
             "metro_q_uc": "dschg_m",
             "sic4dvar_q_uc": "dschg_i",
-            "bam_q_uc": "dschg_b",
-            "boi_q_uc": "dschg_a",
+            #"bam_q_uc": "dschg_b",
+            "boi_q_uc": "dschg_b",
             "hivdi_q_uc": "dschg_h",
             "momma_q_uc": "dschg_o",
             "sads_q_uc": "dschg_s",
@@ -562,7 +566,7 @@ class ValidationConfluence:
         offline_file = f"{offline_dir}/{self.reach_id}_offline.nc"
         off = Dataset(offline_file, 'r')
         offline_data = {}
-        offline_data[convention_dict["bam_q_c"]] = off[convention_dict["bam_q_c"]][:].filled(np.nan)
+        #offline_data[convention_dict["bam_q_c"]] = off[convention_dict["bam_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["boi_q_c"]] = off[convention_dict["boi_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["hivdi_q_c"]] = off[convention_dict["hivdi_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["metro_q_c"]] = off[convention_dict["metro_q_c"]][:].filled(np.nan)
@@ -570,7 +574,7 @@ class ValidationConfluence:
         offline_data[convention_dict["sads_q_c"]] = off[convention_dict["sads_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["sic4dvar_q_c"]] = off[convention_dict["sic4dvar_q_c"]][:].filled(np.nan)
         offline_data[convention_dict["sic4dvar_q_uc"]] = off[convention_dict["sic4dvar_q_uc"]][:].filled(np.nan)
-        offline_data[convention_dict["bam_q_uc"]] = off[convention_dict["bam_q_uc"]][:].filled(np.nan)
+        #offline_data[convention_dict["bam_q_uc"]] = off[convention_dict["bam_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["boi_q_uc"]] = off[convention_dict["boi_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["hivdi_q_uc"]] = off[convention_dict["hivdi_q_uc"]][:].filled(np.nan)
         offline_data[convention_dict["metro_q_uc"]] = off[convention_dict["metro_q_uc"]][:].filled(np.nan)
@@ -635,25 +639,45 @@ class ValidationConfluence:
         # SWOT time 
         time = self.read_time_data()
         algo_dim = int(self.NUM_ALGOS)
+        algo_dim_o = int(self.NUM_ALGOS_OFFLINE)
         Tdim = len(time)
         # Data fill values
-        no_offline = True
-        data_O = {
-            "algorithm": np.full((self.NUM_ALGOS_OFFLINE), fill_value=""),
-            "Gid": np.full((self.NUM_ALGOS_OFFLINE), fill_value=""),
-            "pearsonr": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "SIGe": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "NSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "Rsq": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "KGE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "RMSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "n": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "nRMSE": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
-            "nBIAS": np.full((self.NUM_ALGOS_OFFLINE), fill_value=-9999),
+        no_offline = False
+        data_offline = {
+            "algorithm": np.full(algo_dim_o, fill_value=""),
+            "Gid": np.full(algo_dim_o, fill_value=""),
+            "pearsonr": np.full(algo_dim_o, fill_value=-9999),
+            "SIGe": np.full(algo_dim_o, fill_value=-9999),
+            "NSE": np.full(algo_dim_o, fill_value=-9999),
+            "Rsq": np.full(algo_dim_o, fill_value=-9999),
+            "KGE": np.full(algo_dim_o, fill_value=-9999),
+            "RMSE": np.full(algo_dim_o, fill_value=-9999),
+            "n": np.full(algo_dim_o, fill_value=-9999),
+            "nRMSE": np.full(algo_dim_o, fill_value=-9999),
+            "nBIAS": np.full(algo_dim_o, fill_value=-9999),
             "t": np.full(Tdim, fill_value=-9999),
             "consensus": np.full(Tdim, fill_value=-9999),
         }
-
+        # Check if there is data to validate
+        if self.gage_data:
+            try:
+                if self.offline_data:
+                    print('o before stats')
+                    print(self.offline_data)
+                    data_offline = stats(time, self.offline_data, self.gage_data["qt"], 
+                                      self.gage_data["q"], self.gage_data["gid"], str(self.reach_id), 
+                                      self.output_dir / "figs")
+                    print('o after stats')
+                    print(data_offline)
+                else:
+                    warnings.warn('No offline data found...')
+                    no_offline = True
+            except Exception as e:
+                warnings.warn(f'stats() failed for offline reach {self.reach_id}: {e}')
+                no_offline = True
+        else:
+            warnings.warn('No gauge found for reach...')
+            
         no_flpe = False
         # Check if there is data to validate
         if self.gage_data:
@@ -704,7 +728,7 @@ class ValidationConfluence:
         gage_type = "No data" if not self.gage_data else self.gage_data["type"]       
         ALLnone = np.all([no_flpe, no_moi, no_offline])     
         if (gage_type != "No data") and (ALLnone != True):
-            self.write(data_flpe, data_moi, data_O, self.reach_id, gage_type, [no_flpe, no_moi, no_offline])
+            self.write(data_flpe, data_moi, data_offline, self.reach_id, gage_type, [no_flpe, no_moi, no_offline])
 
     def write(self, stats_flpe, stats_moi, stats_O, reach_id, gage_type, GO):
         """Write stats to NetCDF file.
@@ -885,7 +909,9 @@ class ValidationConfluence:
 
         # --- Offline variables (use num_algos_offline) ---
         if OFFno == False:
-            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_offline", "nchar_flpe"),)      
+            print(stats_O)
+            a_v_o = out.createVariable("algorithm_o", 'S1', ("num_algos_offline", "nchar_flpe"),)
+            print(stats_O["algorithm"][0].astype("S16"))
             a_v_o[:] = stringtochar(stats_O["algorithm"][0].astype("S16"))
             gid_v_o = out.createVariable("gageID_o", "S1", ("num_algos_offline", "nchar_gage"), fill_value=fill)
 
