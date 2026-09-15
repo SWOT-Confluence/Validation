@@ -408,7 +408,7 @@ class ValidationConfluence:
             moi_data[algo] = safe_read_q(algo)
 
         "pull moi gauge information"
-        moi['gage'].group=g_group
+        g_group=moi['gage'].group
         if g_group == 'none':
             self.reach_con_status=np.nan
             self.reach_con_validation=np.nan
