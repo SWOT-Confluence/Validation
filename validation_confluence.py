@@ -407,6 +407,21 @@ class ValidationConfluence:
         for algo in MOI_BASE_ALGOS:
             moi_data[algo] = safe_read_q(algo)
 
+        "pull moi gauge information"
+        moi['gage'].group=g_group
+        if g_group == 'none':
+            self.reach_con_status=np.nan
+            self.reach_con_validation=np.nan
+            self.reach_con_calibration=np.nan
+        if g_group == 'validation':
+                    self.reach_con_status=1
+                    self.reach_con_validation=1
+                    self.reach_con_calibration=0
+        if g_group == 'calibration':
+                            self.reach_con_status=1
+                            self.reach_con_validation=0
+                            self.reach_con_calibration=1
+            
         moi.close()
 
         # MOI output does not write a consensus group, so compute it here
@@ -762,6 +777,9 @@ class ValidationConfluence:
         out.has_validation_moi  = 0 if np.where(stats_moi["algorithm"]  == "")[0].size == self.NUM_ALGOS else 1
         out.has_validation_o    = 0 if np.where(stats_O["algorithm"]    == "")[0].size == self.NUM_ALGOS_OFFLINE else 1
         out.gage_type = gage_type.upper()
+        out.moi_gauge_status=self.reach_con_status
+        out.moi_gauge_validation=self.reach_con_validation
+        out.moi_gauge_calibration=self.reach_con_calibration
         
         # Separate fixed dimensions for flpe/moi and offline
         out.createDimension("num_algos_flpe", self.NUM_ALGOS)
