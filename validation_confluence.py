@@ -778,12 +778,10 @@ class ValidationConfluence:
         out.has_validation_o    = 0 if np.where(stats_O["algorithm"]    == "")[0].size == self.NUM_ALGOS_OFFLINE else 1
         out.gage_type = gage_type.upper()
         if MOIno:
-            out.moi_gauge_status= self.INT_FILL
-            out.moi_gauge_validation= self.INT_FILL
-            out.moi_gauge_calibration= self.INT_FILL
-            out.moi_gauge_status=self.reach_con_status
-            out.moi_gauge_validation=self.reach_con_validation
-            out.moi_gauge_calibration=self.reach_con_calibration
+            out.moi_gauge_status= empty
+            out.moi_gauge_validation= empty
+            out.moi_gauge_calibration= empty
+          
         else:
             out.moi_gauge_status=self.reach_con_status
             out.moi_gauge_validation=self.reach_con_validation
