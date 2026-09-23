@@ -777,9 +777,15 @@ class ValidationConfluence:
         out.has_validation_moi  = 0 if np.where(stats_moi["algorithm"]  == "")[0].size == self.NUM_ALGOS else 1
         out.has_validation_o    = 0 if np.where(stats_O["algorithm"]    == "")[0].size == self.NUM_ALGOS_OFFLINE else 1
         out.gage_type = gage_type.upper()
-        out.moi_gauge_status=self.reach_con_status
-        out.moi_gauge_validation=self.reach_con_validation
-        out.moi_gauge_calibration=self.reach_con_calibration
+        if out.has_validation_moi==1:
+            out.moi_gauge_status=self.reach_con_status
+            out.moi_gauge_validation=self.reach_con_validation
+            out.moi_gauge_calibration=self.reach_con_calibration
+        else:
+            out.moi_gauge_status= INT_FILL
+            out.moi_gauge_validation= INT_FILL
+            out.moi_gauge_calibration= INT_FILL
+            
         
         # Separate fixed dimensions for flpe/moi and offline
         out.createDimension("num_algos_flpe", self.NUM_ALGOS)
