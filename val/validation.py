@@ -73,6 +73,7 @@ def stats(St, Sq_, Vt, Vq, gid, IDstr, figdir):
             St_p = Filterst[finalfilter]
             Sq = Filtersoneq[finalfilter]
             print('sqlen'+str(len(Sq)))
+            print(Sq)
             print('gqlen'+str(len(Gq)))
 
             # Require minimum number of observations
