@@ -39,7 +39,9 @@ def stats(St, Sq_, Vt, Vq, gid, IDstr, figdir):
         print(algo)
 
         Sq = Sq_[algo]
-        """"This is a test batch of code this will average q if there are multiple obs on the same day""""
+        
+        #This is a test batch of code this will average q if there are multiple obs on the same day
+       
         nsq=[]
         nst=[]
         for T in np.unique(St)
@@ -48,7 +50,7 @@ def stats(St, Sq_, Vt, Vq, gid, IDstr, figdir):
         nsq.append(np.nanmean(Sq[qdx]))
         St=np.array(nst)
         Sq=np.array(nsq)
-        """This is a test batch of code this will average q if there are multiple obs on the same day"""
+        #This is a test batch of code this will average q if there are multiple obs on the same day
         if np.size(Sq) > 3:  # prevent failures on filled algo data
             STfilter = ~np.isnan(St)
             goodst = np.array(St)[STfilter]
