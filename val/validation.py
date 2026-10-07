@@ -72,6 +72,8 @@ def stats(St, Sq_, Vt, Vq, gid, IDstr, figdir):
             Gq = Filtergq[finalfilter]
             St_p = Filterst[finalfilter]
             Sq = Filtersoneq[finalfilter]
+            print('sqlen'+str(len(Sq)))
+            print('gqlen'+str(len(Gq)))
 
             # Require minimum number of observations
             if len(Sq) >= MIN_OBS:
@@ -193,5 +195,5 @@ def stats(St, Sq_, Vt, Vq, gid, IDstr, figdir):
         "t": St,
         "consensus": OUTconsensus,
     }
-
+    print(validout)
     return validout
