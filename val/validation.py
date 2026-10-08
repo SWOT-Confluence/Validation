@@ -44,10 +44,10 @@ def stats(St, Sq_, Vt, Vq, gid, IDstr, figdir):
        
         nsq=[]
         nst=[]
-        for T in np.unique(St)
-        nst.append(T)
-        qdx=np.where(St==T)
-        nsq.append(np.nanmean(Sq[qdx]))
+        for T in np.unique(St):
+            nst.append(T)
+            qdx=np.where(St==T)
+            nsq.append(np.nanmean(Sq[qdx]))
         St=np.array(nst)
         Sq=np.array(nsq)
         #This is a test batch of code this will average q if there are multiple obs on the same day
