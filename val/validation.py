@@ -43,7 +43,7 @@ def stats(St, Sq_, Vt, Vq, gid, IDstr, figdir):
             STfilter = ~np.isnan(St)
             goodst = np.array(St)[STfilter]
             tgoodflpeq = Sq[STfilter]
-            goodflpeq=Sq[~np.isnan(tgoodflpeq)]
+            goodflpeq=tgoodflpeq[~np.isnan(tgoodflpeq)]
             goodst=goodst[~np.isnan(tgoodflpeq)]
             gqindex = []
             sqindex = []
@@ -57,23 +57,22 @@ def stats(St, Sq_, Vt, Vq, gid, IDstr, figdir):
                 else:
                     gqindex.append(np.nan)
                     sqindex.append(np.nan)
-
+                    
             Ggqindex = ~np.isnan(gqindex)
             GQdx = np.array(gqindex)[Ggqindex].astype(int)
-            
             Gsqindex = ~np.isnan(sqindex)
             GQsdx = np.array(sqindex)[Gsqindex].astype(int)
-            
             Filtergq = np.array(Vq)[GQdx]
             Filterst = goodst[GQsdx]
             Filtersoneq = goodflpeq[GQsdx]
 
-            # Filter to positive and upper ceiling values on both sides
+            # # Filter to positive and upper ceiling values on both sides
             finalfilter = (Filtersoneq > 0) & (Filtergq > 0) & (Filtersoneq < 1e7) & (Filtergq < 1e7)
 
             Gq = Filtergq[finalfilter]
             St_p = Filterst[finalfilter]
             Sq = Filtersoneq[finalfilter]
+
 
             # Require minimum number of observations
             if len(Sq) >= MIN_OBS:
