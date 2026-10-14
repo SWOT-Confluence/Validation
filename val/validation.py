@@ -42,11 +42,13 @@ def stats(St, Sq_, Vt, Vq, gid, IDstr, figdir):
         if np.size(Sq) > 3:  # prevent failures on filled algo data
             STfilter = ~np.isnan(St)
             goodst = np.array(St)[STfilter]
-            goodflpeq = Sq[STfilter]
-
+            tgoodflpeq = Sq[STfilter]
+            goodflpeq=Sq[~np.isnan(tgoodflpeq)]
+            goodst=goodst[~np.isnan(tgoodflpeq)]
             gqindex = []
             sqindex = []
-            for time in goodst:
+            for i in range(len(goodst)):
+                time=goodst[i]
                 tindex = np.where(Vt.astype(int) == int(time))[0]
                 Stindex = np.where(goodst == int(time))[0]
                 if np.size(tindex) > 0:
