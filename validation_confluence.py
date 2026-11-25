@@ -162,10 +162,18 @@ class ValidationConfluence:
             self.offline_data = {}
         
         self.flpe_data = self.read_flpe_data(FLPE)
+        # MOI gauge flags default to the integer fill so they are always
+        # defined, even when the MOI file is missing or cannot be read.
+        self.reach_con_status = self.INT_FILL
+        self.reach_con_validation = self.INT_FILL
+        self.reach_con_calibration = self.INT_FILL
         try:
             self.moi_data = self.read_moi_data(MOI)
         except FileNotFoundError:
             warnings.warn(f'No MOI file found for reach {self.reach_id}, skipping MOI validation')
+            self.moi_data = {}
+        except Exception as e:
+            warnings.warn(f'Could not read MOI file for reach {self.reach_id} ({e}), skipping MOI validation')
             self.moi_data = {}
 
     def read_gage_data(self, sos_file):
@@ -407,21 +415,20 @@ class ValidationConfluence:
         for algo in MOI_BASE_ALGOS:
             moi_data[algo] = safe_read_q(algo)
 
-        "pull moi gauge information"
-        g_group=moi['gage'].group
-        if g_group == 'none':
-            self.reach_con_status=np.nan
-            self.reach_con_validation=np.nan
-            self.reach_con_calibration=np.nan
-        if g_group == 'validation':
-                    self.reach_con_status=1
-                    self.reach_con_validation=1
-                    self.reach_con_calibration=0
-        if g_group == 'calibration':
-                            self.reach_con_status=1
-                            self.reach_con_validation=0
-                            self.reach_con_calibration=1
-            
+        # Pull MOI gauge information. Older MOI files have no 'gage' group;
+        # the flags then keep their integer fill value.
+        gage_grp = moi.groups.get('gage')
+        if gage_grp is not None:
+            g_group = str(getattr(gage_grp, 'group', 'none')).strip().lower()
+            g_source = str(getattr(gage_grp, 'constraint_source', 'none')).strip().lower()
+            # status: 1 if the reach has a catalogued gauge or was constrained
+            # by in-situ data (real gauge or CORRIDORS pseudo-gauge), else 0.
+            # Integers only: the output module writes these as i4.
+            constrained = g_source in ('gage', 'corridors')
+            self.reach_con_status = 1 if (g_group != 'none' or constrained) else 0
+            self.reach_con_validation = 1 if g_group == 'validation' else 0
+            self.reach_con_calibration = 1 if g_group == 'calibration' else 0
+
         moi.close()
 
         # MOI output does not write a consensus group, so compute it here
@@ -729,12 +736,16 @@ class ValidationConfluence:
         no_moi = False
         # Check if there is data to validate
         if self.gage_data:
-            if self.moi_data:
-                data_moi = stats(time, self.moi_data, self.gage_data["qt"], 
-                                 self.gage_data["q"], self.gage_data["gid"], str(self.reach_id), 
-                                 self.output_dir / "figs")
-            else:
-                warnings.warn('No moi data found...')
+            try:
+                if self.moi_data:
+                    data_moi = stats(time, self.moi_data, self.gage_data["qt"], 
+                                     self.gage_data["q"], self.gage_data["gid"], str(self.reach_id), 
+                                     self.output_dir / "figs")
+                else:
+                    warnings.warn('No moi data found...')
+                    no_moi = True
+            except Exception as e:
+                warnings.warn(f'stats() failed for moi reach {self.reach_id}: {e}')
                 no_moi = True
         else:
             warnings.warn('No gauge found for reach...')
